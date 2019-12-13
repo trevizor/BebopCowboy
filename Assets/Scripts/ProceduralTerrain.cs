@@ -9,14 +9,11 @@ public class ProceduralTerrain : MonoBehaviour
     public Terrain terrain;
     public TerrainData terrainData;
 
-    //----------- perlin noise
-    private float perlinXScale = 0.005f;
-    private float perlinYScale = 0.005f;
-    private int perlinOffsetX = 50;
-    private int perlinOffsetY = 50;
-    private int perlinOctaves = 16;
-    private float perlinPersistance = 0.4f;
-    private float perlinHeightScale = 0.02f;
+    //Midpoint displacement
+    float MPDheightMin = -2f;
+    float MPDheightMax = 2f;
+    float MPDheightDampenerPower = 2.0f;
+    float MPDroughness = 2.0f;
 
 
     public List<PerlinNoiseParameters> PerlinList = new List<PerlinNoiseParameters>();
@@ -32,10 +29,156 @@ public class ProceduralTerrain : MonoBehaviour
 
         PerlinList = new List<PerlinNoiseParameters>();
         VoronoiList = new List<VoronoiParameters>();
-        Random.InitState(13666000); //init state must come from the level seed
+        Random.InitState(13666020); //init state must come from the level seed
         AddDebugValues();
+        //MidPointDisplacement();
         GenerateVoronoi();
+        Smooth();
+        Smooth();
         GeneratePerlin();
+    }
+
+    public void MidPointDisplacement() //with these parameters it creates a few holes and hills
+    {
+        float[,] heightMap = terrainData.GetHeights(0,0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        int width = terrainData.heightmapWidth - 1;
+        int squareSize = width;
+        float heightMin = -0.01f;
+        float heightMax = 1f;
+        float heightDampener = (float)Mathf.Pow(MPDheightDampenerPower, -1 * MPDroughness);
+        
+        int cornerX, cornerY;
+        int midX, midY;
+        int pmidXL, pmidXR, pmidYU, pmidYD;
+
+        while (squareSize > 0)
+        {
+            for (int x = 0; x < width; x += squareSize)
+            {
+                for (int y = 0; y < width; y += squareSize)
+                {
+                    cornerX = (x + squareSize);
+                    cornerY = (y + squareSize);
+
+                    midX = (int)(x + squareSize / 2.0f);
+                    midY = (int)(y + squareSize / 2.0f);
+
+                    heightMap[midX, midY] = (float)((heightMap[x, y] +
+                                                     heightMap[cornerX, y] +
+                                                     heightMap[x, cornerY] +
+                                                     heightMap[cornerX, cornerY]) / 4.0f +
+                                                    UnityEngine.Random.Range(heightMin, heightMax));
+                }
+            }
+
+            for (int x = 0; x < width; x += squareSize)
+            {
+                for (int y = 0; y < width; y += squareSize)
+                {
+
+                    cornerX = (x + squareSize);
+                    cornerY = (y + squareSize);
+
+                    midX = (int)(x + squareSize / 2.0f);
+                    midY = (int)(y + squareSize / 2.0f);
+
+                    pmidXR = (int)(midX + squareSize);
+                    pmidYU = (int)(midY + squareSize);
+                    pmidXL = (int)(midX - squareSize);
+                    pmidYD = (int)(midY - squareSize);
+
+                    if (pmidXL <= 0 || pmidYD <= 0
+                        || pmidXR >= width - 1 || pmidYU >= width - 1) continue;
+
+                    //Calculate the square value for the bottom side  
+                    heightMap[midX, y] = (float)((heightMap[midX, midY] +
+                                                  heightMap[x, y] +
+                                                  heightMap[midX, pmidYD] +
+                                                  heightMap[cornerX, y]) / 4.0f +
+                                                 UnityEngine.Random.Range(heightMin, heightMax));
+                    //Calculate the square value for the top side   
+                    heightMap[midX, cornerY] = (float)((heightMap[x, cornerY] +
+                                                            heightMap[midX, midY] +
+                                                            heightMap[cornerX, cornerY] +
+                                                        heightMap[midX, pmidYU]) / 4.0f +
+                                                       UnityEngine.Random.Range(heightMin, heightMax));
+
+                    //Calculate the square value for the left side   
+                    heightMap[x, midY] = (float)((heightMap[x, y] +
+                                                            heightMap[pmidXL, midY] +
+                                                            heightMap[x, cornerY] +
+                                                  heightMap[midX, midY]) / 4.0f +
+                                                 UnityEngine.Random.Range(heightMin, heightMax));
+                    //Calculate the square value for the right side   
+                    heightMap[cornerX, midY] = (float)((heightMap[midX, y] +
+                                                            heightMap[midX, midY] +
+                                                            heightMap[cornerX, cornerY] +
+                                                            heightMap[pmidXR, midY]) / 4.0f +
+                                                       UnityEngine.Random.Range(heightMin, heightMax));
+
+                }
+            }
+
+            squareSize = (int)(squareSize / 2.0f);
+            heightMin *= heightDampener;
+            heightMax *= heightDampener;
+        }
+
+        terrainData.SetHeights(0, 0, heightMap);
+    }
+
+
+    private void Smooth ()
+    {
+        
+        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        float[,] smoothHeightMap = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
+        //steps to get all 8 neighboor pixels
+        Vector2[] steps = {
+                    new Vector2(-1,-1),
+                    new Vector2(0,-1),
+                    new Vector2(1,-1),
+                    new Vector2(-1,0),
+                    new Vector2(0,0),
+                    new Vector2(1,0),
+                    new Vector2(-1,1),
+                    new Vector2(0,1),
+                    new Vector2(1,1),
+                    new Vector2(-1,-2),
+                    new Vector2(0,-2),
+                    new Vector2(1,-2),
+                    new Vector2(-1,2),
+                    new Vector2(0,2),
+                    new Vector2(1,2),
+                    new Vector2(-2,-1),
+                    new Vector2(-2,0),
+                    new Vector2(-2,1),
+                    new Vector2(-2,-2),
+                    new Vector2(-2,2),
+                    new Vector2(2,-1),
+                    new Vector2(2,0),
+                    new Vector2(2,1),
+                    new Vector2(2,-2),
+                    new Vector2(2,2)
+                };
+        float avgHeight = 0f;
+
+        for (int x = 0; x < terrainData.heightmapWidth; x++)
+        {
+            for (int y = 0; y < terrainData.heightmapHeight; y++)
+            {
+                foreach( Vector2 step in steps)
+                {
+                    if( (x + step.x) > 0 && (x + step.x) < terrainData.heightmapWidth && //preventing out of bounds
+                        (y + step.y) > 0 && (y + step.y) < terrainData.heightmapHeight)
+                        avgHeight += heightMap[(int)(x + step.x), (int)(y + step.y)];
+                }
+                avgHeight = avgHeight / steps.Length;
+                smoothHeightMap[x, y] = avgHeight;
+            }
+        }
+
+        terrainData.SetHeights(0,0, smoothHeightMap);
     }
 
     private void GenerateVoronoi ()
@@ -101,7 +244,10 @@ public class ProceduralTerrain : MonoBehaviour
         float result = Mathf.Clamp(fBM((x + _target.perlinOffsetX),
                                         (y + _target.perlinOffsetY),
                                         _target.perlinOctaves,
-                                        _target.perlinPersistance) - _target.heightReduction,
+                                        _target.perlinPersistance,
+                                        _target.perlinScaleModifier,
+                                        _target.perlinXScale,
+                                        _target.perlinYScale) - _target.heightReduction,
                                         _target.minimumClamp, _target.maximumClamp);
         if (_target.normalizeSize)
         {
@@ -133,12 +279,12 @@ public class ProceduralTerrain : MonoBehaviour
 
 
     //fractal brownian motion
-    public float fBM(float x, float y, int oct, float persistance, float perlinScaleModifier = 1f) {
+    public float fBM(float x, float y, int oct, float persistance, float perlinScaleModifier, float _perlinXScale, float _perlinYScale) {
         float total = 0f;
         float amplitude = 1;
         float maxValue = 0;
-        float bPerlinScaleX = perlinXScale * perlinScaleModifier;
-        float bPerlinScaleY = perlinYScale * perlinScaleModifier;
+        float bPerlinScaleX = _perlinXScale * perlinScaleModifier;
+        float bPerlinScaleY = _perlinYScale * perlinScaleModifier;
         for (int i = 0; i<oct; i++)
         {
             total += Mathf.PerlinNoise(x * bPerlinScaleX, y  * bPerlinScaleY) * amplitude;
@@ -231,8 +377,8 @@ public class ProceduralTerrain : MonoBehaviour
         VoronoiList.Add(
             new VoronoiParameters(
                 "High Mountain",
-                0.2f,
-                0.6f,
+                0.1f,
+                0.5f,
                 1f,
                 0.6f,
                 1,
