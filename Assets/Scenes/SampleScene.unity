@@ -400,6 +400,28 @@ MonoBehaviour:
     tileSize: {x: 50, y: 50}
     minSteepness: 25
     maxSteepness: 90
+  vegetationList:
+  - mesh: {fileID: 100000, guid: 43202a31bd1113061100b7a844295342, type: 3}
+    minHeight: 0.2
+    maxHeight: 0.3
+    minSteepness: 0
+    maxSteepness: 20
+    minScale: 0.95
+    maxScale: 1.05
+  - mesh: {fileID: 100000, guid: 21e1dddb280f946a3b1555bb9d691e43, type: 3}
+    minHeight: 0
+    maxHeight: 0.1
+    minSteepness: 0
+    maxSteepness: 25
+    minScale: 0.9
+    maxScale: 1.05
+  - mesh: {fileID: 100000, guid: c85837c6cd116f201100647a44295342, type: 3}
+    minHeight: 0
+    maxHeight: 0.2
+    minSteepness: 0
+    maxSteepness: 25
+    minScale: 0.95
+    maxScale: 1.2
 --- !u!1 &1857607657
 GameObject:
   m_ObjectHideFlags: 0

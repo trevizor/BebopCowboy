@@ -22,14 +22,32 @@ public class ProceduralTerrain : MonoBehaviour
         public Vector2 tileOffset = new Vector2(0f,0f);
         public Vector2 tileSize = new Vector2(50f, 50f);
         public float minSteepness = 0.0f;
-        public float maxSteepness = 1.5f;
+        public float maxSteepness = 25f;
+    }
+
+    [System.Serializable]
+    public class VegetationData
+    {
+        public GameObject mesh = null;
+        public float minHeight = 0.1f;
+        public float maxHeight = 0.2f;
+        public float minSteepness = 0.0f;
+        public float maxSteepness = 25f;
+        public float minScale = 0.95f;
+        public float maxScale = 1.05f;
+        public int maximumTrees = 5000;
+        public int treeSpacing = 5;
     }
 
     public List<SplatHeights> splatHeights = new List<SplatHeights>()
     {
         new SplatHeights()
     };
-    
+    public List<VegetationData> vegetationList = new List<VegetationData>()
+    {
+        new VegetationData()
+    };
+
     public List<PerlinNoiseParameters> PerlinList = new List<PerlinNoiseParameters>();
     public List<VoronoiParameters> VoronoiList = new List<VoronoiParameters>();
 
@@ -50,9 +68,30 @@ public class ProceduralTerrain : MonoBehaviour
         Smooth();
         Smooth();
         GeneratePerlin();
-
+        GenerateVegetation();
         SplatMaps();
     }
+
+
+
+    void GenerateVegetation ()
+    {
+        int maximumTrees = 5000;
+        int treeSpacing = 5;
+
+        TreePrototype[] newTreePrototypes;
+        newTreePrototypes = new TreePrototype[vegetationList.Count];
+        int tindex = 0;
+        foreach (VegetationData t in vegetationList)
+        {
+            newTreePrototypes[tindex] = new TreePrototype();
+            newTreePrototypes[tindex].prefab = t.mesh;
+            tindex++;
+        }
+
+        terrainData.treePrototypes = newTreePrototypes;
+    }
+
 
     float GetSteepness(float[,] heightmap, int x, int y, int width, int height)
     {
@@ -69,8 +108,7 @@ public class ProceduralTerrain : MonoBehaviour
         float steep = gradient.magnitude;
         return steep;
     }
-
-
+    
     public void SplatMaps ()
     {
         TerrainLayer[] newSplatPrototypes;
