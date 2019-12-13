@@ -100,7 +100,7 @@ public class ProceduralTerrain : MonoBehaviour
                     float blendNoise = Mathf.PerlinNoise(x*0.005f, y * 0.005f) * 0.2f;
                     float thisHeightStart = splatHeights[i].minHeight;
                     float thisHeightEnd = splatHeights[i].maxHeight + blendNoise;
-                    //get steepness uses X and Y inverted
+                    //get steepness uses X and Y inverted. Still not happy with the current results
                     float steepness = terrainData.GetSteepness(y / (float) terrainData.heightmapHeight, x / (float)terrainData.heightmapWidth);
                     if ( (heightMap[x,y] >= thisHeightStart && heightMap[x,y] <= thisHeightEnd) &&
                         (steepness >= splatHeights[i].minSteepness && steepness <= splatHeights[i].maxSteepness))

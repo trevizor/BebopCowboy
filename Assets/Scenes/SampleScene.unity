@@ -364,41 +364,41 @@ MonoBehaviour:
     tileOffset: {x: 0, y: 0}
     tileSize: {x: 10, y: 10}
     minSteepness: 0
-    maxSteepness: 35
+    maxSteepness: 25
   - texture: {fileID: 2800000, guid: 858e483d613d848cb935156b41553e4d, type: 3}
     minHeight: 0.02
     maxHeight: 0.1
     tileOffset: {x: 0, y: 0}
     tileSize: {x: 10, y: 10}
     minSteepness: 0
-    maxSteepness: 35
+    maxSteepness: 25
   - texture: {fileID: 2800000, guid: 70ad2695569e2454ea6caf1faa1853c0, type: 3}
     minHeight: 0.09
     maxHeight: 0.11
     tileOffset: {x: 0, y: 0}
     tileSize: {x: 50, y: 50}
     minSteepness: 0
-    maxSteepness: 35
+    maxSteepness: 25
   - texture: {fileID: 2800000, guid: bcf1aee4cb4974e7694ecd794826771e, type: 3}
     minHeight: 0.1
     maxHeight: 0.13
     tileOffset: {x: 0, y: 0}
     tileSize: {x: 10, y: 10}
     minSteepness: 0
-    maxSteepness: 35
+    maxSteepness: 25
   - texture: {fileID: 2800000, guid: 27f896e8cb56a467885c23b4ab985df8, type: 3}
     minHeight: 0.13
     maxHeight: 1
     tileOffset: {x: 0, y: 0}
     tileSize: {x: 50, y: 50}
     minSteepness: 0
-    maxSteepness: 35
+    maxSteepness: 25
   - texture: {fileID: 2800000, guid: 27f896e8cb56a467885c23b4ab985df8, type: 3}
     minHeight: 0
     maxHeight: 1
     tileOffset: {x: 0, y: 0}
     tileSize: {x: 50, y: 50}
-    minSteepness: 35
+    minSteepness: 25
     maxSteepness: 90
 --- !u!1 &1857607657
 GameObject:
