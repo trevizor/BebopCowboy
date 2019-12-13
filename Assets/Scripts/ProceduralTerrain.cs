@@ -10,8 +10,6 @@ public class ProceduralTerrain : MonoBehaviour
     public TerrainData terrainData;
 
     //Midpoint displacement
-    float MPDheightMin = -2f;
-    float MPDheightMax = 2f;
     float MPDheightDampenerPower = 2.0f;
     float MPDroughness = 2.0f;
 
@@ -23,7 +21,8 @@ public class ProceduralTerrain : MonoBehaviour
         public float maxHeight = 0.2f;
         public Vector2 tileOffset = new Vector2(0f,0f);
         public Vector2 tileSize = new Vector2(50f, 50f);
-        public bool remove = false;
+        public float minSteepness = 0.0f;
+        public float maxSteepness = 1.5f;
     }
 
     public List<SplatHeights> splatHeights = new List<SplatHeights>()
@@ -55,6 +54,23 @@ public class ProceduralTerrain : MonoBehaviour
         SplatMaps();
     }
 
+    float GetSteepness(float[,] heightmap, int x, int y, int width, int height)
+    {
+        float h = heightmap[x, y];
+        int nx = x + 1;
+        int ny = y + 1;
+        //checks other direction if on heightmap margin
+        if (nx > width - 1) nx = x - 1;
+        if (ny > height - 1) ny = y - 1;
+
+        float dx = heightmap[nx, y] - h;
+        float dy = heightmap[x, ny] - h;
+        Vector2 gradient = new Vector2(dx, dy);
+        float steep = gradient.magnitude;
+        return steep;
+    }
+
+
     public void SplatMaps ()
     {
         TerrainLayer[] newSplatPrototypes;
@@ -81,9 +97,13 @@ public class ProceduralTerrain : MonoBehaviour
                 float[] splat = new float[terrainData.alphamapLayers];
                 for (int i = 0; i < splatHeights.Count; i++)
                 {
+                    float blendNoise = Mathf.PerlinNoise(x*0.005f, y * 0.005f) * 0.2f;
                     float thisHeightStart = splatHeights[i].minHeight;
-                    float thisHeightEnd = splatHeights[i].maxHeight;
-                    if ((heightMap[x,y] >= thisHeightStart && heightMap[x,y] <= thisHeightEnd)  )
+                    float thisHeightEnd = splatHeights[i].maxHeight + blendNoise;
+                    //get steepness uses X and Y inverted
+                    float steepness = terrainData.GetSteepness(y / (float) terrainData.heightmapHeight, x / (float)terrainData.heightmapWidth);
+                    if ( (heightMap[x,y] >= thisHeightStart && heightMap[x,y] <= thisHeightEnd) &&
+                        (steepness >= splatHeights[i].minSteepness && steepness <= splatHeights[i].maxSteepness))
                     {
                         float height = heightMap[x, y];
                         splat[i] = 1;
@@ -405,11 +425,11 @@ public class ProceduralTerrain : MonoBehaviour
             10, // _perlinOctaves
             0.8f, // _perlinScaleModifier
             0.6f, // _perlinPersistance
-            0.55f, // _heightReduction
+            0.45f, // _heightReduction
             0.01f, // _minimumClamp
             1f, // _maximumClamp
             true, //normalize
-            0.4f)
+            0.5f)
             );
         PerlinList.Add(
             new PerlinNoiseParameters("Plains Noise", // _name
