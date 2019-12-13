@@ -15,7 +15,22 @@ public class ProceduralTerrain : MonoBehaviour
     float MPDheightDampenerPower = 2.0f;
     float MPDroughness = 2.0f;
 
+    [System.Serializable]
+    public class SplatHeights
+    {
+        public Texture2D texture = null;
+        public float minHeight = 0.1f;
+        public float maxHeight = 0.2f;
+        public Vector2 tileOffset = new Vector2(0f,0f);
+        public Vector2 tileSize = new Vector2(50f, 50f);
+        public bool remove = false;
+    }
 
+    public List<SplatHeights> splatHeights = new List<SplatHeights>()
+    {
+        new SplatHeights()
+    };
+    
     public List<PerlinNoiseParameters> PerlinList = new List<PerlinNoiseParameters>();
     public List<VoronoiParameters> VoronoiList = new List<VoronoiParameters>();
 
@@ -36,6 +51,70 @@ public class ProceduralTerrain : MonoBehaviour
         Smooth();
         Smooth();
         GeneratePerlin();
+
+        SplatMaps();
+    }
+
+    public void SplatMaps ()
+    {
+        TerrainLayer[] newSplatPrototypes;
+        newSplatPrototypes = new TerrainLayer[splatHeights.Count];int spindex = 0;
+        foreach (SplatHeights sh in splatHeights)
+        {
+            newSplatPrototypes[spindex] = new TerrainLayer();
+            newSplatPrototypes[spindex].diffuseTexture = sh.texture;
+            newSplatPrototypes[spindex].tileOffset = sh.tileOffset;
+            newSplatPrototypes[spindex].tileSize = sh.tileSize;
+            newSplatPrototypes[spindex].diffuseTexture.Apply(true);
+            spindex++;
+        }
+        terrainData.terrainLayers = newSplatPrototypes;
+
+        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        float[,,] splatmapData = new float[terrainData.alphamapWidth,
+                                                terrainData.alphamapHeight,
+                                                terrainData.alphamapLayers];
+        for (int x = 0; x<terrainData.alphamapWidth; x++)
+        {
+            for (int y = 0; y < terrainData.alphamapHeight; y++)
+            {
+                float[] splat = new float[terrainData.alphamapLayers];
+                for (int i = 0; i < splatHeights.Count; i++)
+                {
+                    float thisHeightStart = splatHeights[i].minHeight;
+                    float thisHeightEnd = splatHeights[i].maxHeight;
+                    if ((heightMap[x,y] >= thisHeightStart && heightMap[x,y] <= thisHeightEnd)  )
+                    {
+                        float height = heightMap[x, y];
+                        splat[i] = 1;
+                    }
+                }
+                splat = NormalizeVector(splat);
+                for (int j = 0; j < splatHeights.Count; j++)
+                {
+                    splatmapData[x, y, j] = splat[j];
+                }
+            }
+
+        }
+
+        terrainData.SetAlphamaps(0,0, splatmapData);
+
+    }
+
+    public float[] NormalizeVector (float [] vec)
+    {
+        float total = 0f;
+        for (int x = 0; x< vec.Length; x++)
+        {
+            total += vec[x];
+        }
+        for (int y = 0; y < vec.Length; y++)
+        {
+            vec[y] /= total;
+        }
+
+        return vec;
     }
 
     public void MidPointDisplacement() //with these parameters it creates a few holes and hills
@@ -299,6 +378,8 @@ public class ProceduralTerrain : MonoBehaviour
     }
 
     public void AddDebugValues() {
+
+
         PerlinList.Add(
             new PerlinNoiseParameters("Mountains",
             0.005f,// _perlinXScale
