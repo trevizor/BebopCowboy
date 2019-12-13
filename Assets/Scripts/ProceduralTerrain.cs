@@ -20,6 +20,7 @@ public class ProceduralTerrain : MonoBehaviour
 
 
     public List<PerlinNoiseParameters> PerlinList = new List<PerlinNoiseParameters>();
+    public List<VoronoiParameters> VoronoiList = new List<VoronoiParameters>();
 
     // Start is called before the first frame update
     void Start()
@@ -30,6 +31,128 @@ public class ProceduralTerrain : MonoBehaviour
         terrainData.SetHeights(0, 0, heightMap);
 
         PerlinList = new List<PerlinNoiseParameters>();
+        VoronoiList = new List<VoronoiParameters>();
+        Random.InitState(13666000); //init state must come from the level seed
+        AddDebugValues();
+        GenerateVoronoi();
+        GeneratePerlin();
+    }
+
+    private void GenerateVoronoi ()
+    {
+        foreach (VoronoiParameters _target in VoronoiList)
+        {
+            CalculateVoronoi(_target);
+        }
+        
+    }
+
+    private void CalculateVoronoi (VoronoiParameters _target)
+    {
+        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        Vector3 peak;
+        Vector2 peakLocation;
+        float distanceToPeak;
+        float maxDistance;
+        int numOfInstances = Random.Range(_target.minInstances, _target.maxInstances);
+        float targetSlopeHeight;
+
+        for (int count = 0; count < numOfInstances; count++)
+        {
+            peak = new Vector3(
+            Random.Range(0, terrainData.heightmapWidth),
+            Random.Range(_target.minHeight, _target.maxHeight),
+            Random.Range(0, terrainData.heightmapHeight));
+
+            heightMap[(int)peak.x, (int)peak.z] = peak.y;
+            peakLocation = new Vector2(peak.x, peak.z);
+            maxDistance = Vector2.Distance(new Vector2(0, 0), new Vector2(terrainData.heightmapWidth * _target.maxDistanceMultiplier, terrainData.heightmapHeight * _target.maxDistanceMultiplier));
+
+            for (int x = 0; x < terrainData.heightmapWidth; x++)
+            {
+                for (int y = 0; y < terrainData.heightmapHeight; y++)
+                {
+                    if (!(x == peak.x && y == peak.z))
+                    {
+                        distanceToPeak = Vector2.Distance(peakLocation, new Vector2(x, y))/maxDistance;
+                        
+                        if (_target.powerFallout) {
+                            targetSlopeHeight = peak.y - Mathf.Pow(distanceToPeak, _target.powerValue);
+                        } else
+                        {
+                            targetSlopeHeight = peak.y - (distanceToPeak * _target.falloff);
+                        }
+                        
+                        if (heightMap[x, y] < targetSlopeHeight)
+                        {
+                            heightMap[x, y] = targetSlopeHeight;
+                        }
+                    }
+                }
+            }
+        }
+        
+
+        terrainData.SetHeights(0,0, heightMap);
+    }
+
+    private float CalculatePerlinNoise (int x, int y, PerlinNoiseParameters _target)
+    {
+        float result = Mathf.Clamp(fBM((x + _target.perlinOffsetX),
+                                        (y + _target.perlinOffsetY),
+                                        _target.perlinOctaves,
+                                        _target.perlinPersistance) - _target.heightReduction,
+                                        _target.minimumClamp, _target.maximumClamp);
+        if (_target.normalizeSize)
+        {
+            result *= 1f * _target.heightReduction;
+        }
+        result *= _target.heightMultiplier;
+
+        return result;
+    }
+
+    private void GeneratePerlin()
+    {
+        float[,] heightMap;
+        heightMap = terrainData.GetHeights(0,0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+
+        for (int x = 0; x < terrainData.heightmapWidth; x++)
+        {
+            for (int y = 0; y < terrainData.heightmapHeight; y++)
+            {
+                foreach (PerlinNoiseParameters targetPerlin in PerlinList) {
+                    heightMap[x, y] += CalculatePerlinNoise(x, y, targetPerlin);
+                };
+                
+            }
+
+        }
+        terrainData.SetHeights(0, 0, heightMap);
+    }
+
+
+    //fractal brownian motion
+    public float fBM(float x, float y, int oct, float persistance, float perlinScaleModifier = 1f) {
+        float total = 0f;
+        float amplitude = 1;
+        float maxValue = 0;
+        float bPerlinScaleX = perlinXScale * perlinScaleModifier;
+        float bPerlinScaleY = perlinYScale * perlinScaleModifier;
+        for (int i = 0; i<oct; i++)
+        {
+            total += Mathf.PerlinNoise(x * bPerlinScaleX, y  * bPerlinScaleY) * amplitude;
+            maxValue += amplitude;
+            amplitude *= persistance;
+            bPerlinScaleX *= 2.5f;
+            bPerlinScaleY *= 2.5f;
+        }
+
+        return total / maxValue;
+
+    }
+
+    public void AddDebugValues() {
         PerlinList.Add(
             new PerlinNoiseParameters("Mountains",
             0.005f,// _perlinXScale
@@ -91,96 +214,33 @@ public class ProceduralTerrain : MonoBehaviour
             true, // _normalizeSize
             0.4f)
             );
-        //GenerateTerrain();
-        CalculateVoronoi(120);
-        CalculateVoronoi(920);
-        GeneratePerlin();
-    }
 
-    private void CalculateVoronoi (int pos)
-    {
-        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
-        float falloff = 1f; //smaller numbers make the slope gentler, higher make it steeper
-        float maxDistanceMultiplier = 1f; //needs more testing to check what exactly changes
-        //convert to random stuff
-        Vector3 peak = new Vector3(pos, 0.4f, pos);
-
-        heightMap[(int)peak.x, (int)peak.z] = peak.y;
-
-        Vector2 peakLocation = new Vector2(peak.x, peak.z);
-        //dividing the max distance will decrease the peak influence
-        float maxDistance = Vector2.Distance(new Vector2(0,0), new Vector2(terrainData.heightmapWidth * maxDistanceMultiplier, terrainData.heightmapHeight * maxDistanceMultiplier));
-
-        for (int x = 0; x < terrainData.heightmapWidth; x++) 
-        {
-            for (int y = 0; y < terrainData.heightmapHeight; y++)
-            {
-                if(!(x ==peak.x && y == peak.z))
-                {
-                    float distanceToPeak = Vector2.Distance(peakLocation, new Vector2(x, y));
-                    if (heightMap[x, y] < peak.y - (distanceToPeak / maxDistance)* falloff) {
-                        heightMap[x, y] = peak.y - (distanceToPeak / maxDistance) * falloff;
-                    }
-                }
-            }
-        }
-
-        terrainData.SetHeights(0,0, heightMap);
-    }
-
-    private float CalculatePerlinNoise (int x, int y, PerlinNoiseParameters _target)
-    {
-        float result = Mathf.Clamp(fBM((x + _target.perlinOffsetX),
-                                        (y + _target.perlinOffsetY),
-                                        _target.perlinOctaves,
-                                        _target.perlinPersistance) - _target.heightReduction,
-                                        _target.minimumClamp, _target.maximumClamp);
-        if (_target.normalizeSize)
-        {
-            result *= 1f * _target.heightReduction;
-        }
-        result *= _target.heightMultiplier;
-
-        return result;
-    }
-
-    private void GeneratePerlin()
-    {
-        float[,] heightMap;
-        heightMap = terrainData.GetHeights(0,0, terrainData.heightmapWidth, terrainData.heightmapHeight);
-
-        for (int x = 0; x < terrainData.heightmapWidth; x++)
-        {
-            for (int y = 0; y < terrainData.heightmapHeight; y++)
-            {
-                foreach (PerlinNoiseParameters targetPerlin in PerlinList) {
-                    heightMap[x, y] += CalculatePerlinNoise(x, y, targetPerlin);
-                };
-                
-            }
-
-        }
-        terrainData.SetHeights(0, 0, heightMap);
-    }
-
-
-    //fractal brownian motion
-    public float fBM(float x, float y, int oct, float persistance, float perlinScaleModifier = 1f) {
-        float total = 0f;
-        float amplitude = 1;
-        float maxValue = 0;
-        float bPerlinScaleX = perlinXScale * perlinScaleModifier;
-        float bPerlinScaleY = perlinYScale * perlinScaleModifier;
-        for (int i = 0; i<oct; i++)
-        {
-            total += Mathf.PerlinNoise(x * bPerlinScaleX, y  * bPerlinScaleY) * amplitude;
-            maxValue += amplitude;
-            amplitude *= persistance;
-            bPerlinScaleX *= 2.5f;
-            bPerlinScaleY *= 2.5f;
-        }
-
-        return total / maxValue;
+        VoronoiList.Add(
+            new VoronoiParameters(
+                "gentle slopes",
+                0f,
+                0.1f,
+                0.4f,
+                1f,
+                2,
+                5,
+                true,
+                1.2f
+                )
+            );
+        VoronoiList.Add(
+            new VoronoiParameters(
+                "High Mountain",
+                0.2f,
+                0.6f,
+                1f,
+                0.6f,
+                1,
+                1,
+                true,
+                1.27f
+                )
+            );
 
     }
 
