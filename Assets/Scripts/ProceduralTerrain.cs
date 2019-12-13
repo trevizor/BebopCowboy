@@ -26,6 +26,9 @@ public class ProceduralTerrain : MonoBehaviour
     {
         terrain = this.gameObject.GetComponent<Terrain>();
         terrainData = terrain.terrainData;
+        float[,] heightMap = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
+        terrainData.SetHeights(0, 0, heightMap);
+
         PerlinList = new List<PerlinNoiseParameters>();
         PerlinList.Add(
             new PerlinNoiseParameters("Mountains",
@@ -36,7 +39,6 @@ public class ProceduralTerrain : MonoBehaviour
             16, // _perlinOctaves
             1f, // _perlinScaleModifier
             0.4f, // _perlinPersistance
-            0.02f,
             0.4f,
             0f,
             1f,
@@ -53,7 +55,6 @@ public class ProceduralTerrain : MonoBehaviour
             10, // _perlinOctaves
             0.8f, // _perlinScaleModifier
             0.6f, // _perlinPersistance
-            0.02f, // _perlinHeightScale
             0.55f, // _heightReduction
             0.01f, // _minimumClamp
             1f, // _maximumClamp
@@ -61,7 +62,7 @@ public class ProceduralTerrain : MonoBehaviour
             0.4f)
             );
         PerlinList.Add(
-            new PerlinNoiseParameters("Plains", // _name
+            new PerlinNoiseParameters("Plains Noise", // _name
             0.001f, // _perlinXScale
             0.001f, // _perlinYScale
             0, // _perlinOffsetX
@@ -69,17 +70,63 @@ public class ProceduralTerrain : MonoBehaviour
             10, // _perlinOctaves
             0.8f, // _perlinScaleModifier
             1.1f, // _perlinPersistance
-            0.02f, // _perlinHeightScale
             0.1f, // _heightReduction
             0f, // _minimumClamp
             1f, // _maximumClamp
             true, // _normalizeSize
             0.1f)
             );
+        PerlinList.Add(
+            new PerlinNoiseParameters("Plains Level", // _name
+            0.001f, // _perlinXScale
+            0.001f, // _perlinYScale
+            0, // _perlinOffsetX
+            0, // _perlinOffsetY
+            10, // _perlinOctaves
+            12f, // _perlinScaleModifier
+            1.1f, // _perlinPersistance
+            0f, // _heightReduction
+            0f, // _minimumClamp
+            1f, // _maximumClamp
+            true, // _normalizeSize
+            0.4f)
+            );
         //GenerateTerrain();
+        CalculateVoronoi(120);
+        CalculateVoronoi(920);
         GeneratePerlin();
     }
 
+    private void CalculateVoronoi (int pos)
+    {
+        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        float falloff = 1f; //smaller numbers make the slope gentler, higher make it steeper
+        float maxDistanceMultiplier = 1f; //needs more testing to check what exactly changes
+        //convert to random stuff
+        Vector3 peak = new Vector3(pos, 0.4f, pos);
+
+        heightMap[(int)peak.x, (int)peak.z] = peak.y;
+
+        Vector2 peakLocation = new Vector2(peak.x, peak.z);
+        //dividing the max distance will decrease the peak influence
+        float maxDistance = Vector2.Distance(new Vector2(0,0), new Vector2(terrainData.heightmapWidth * maxDistanceMultiplier, terrainData.heightmapHeight * maxDistanceMultiplier));
+
+        for (int x = 0; x < terrainData.heightmapWidth; x++) 
+        {
+            for (int y = 0; y < terrainData.heightmapHeight; y++)
+            {
+                if(!(x ==peak.x && y == peak.z))
+                {
+                    float distanceToPeak = Vector2.Distance(peakLocation, new Vector2(x, y));
+                    if (heightMap[x, y] < peak.y - (distanceToPeak / maxDistance)* falloff) {
+                        heightMap[x, y] = peak.y - (distanceToPeak / maxDistance) * falloff;
+                    }
+                }
+            }
+        }
+
+        terrainData.SetHeights(0,0, heightMap);
+    }
 
     private float CalculatePerlinNoise (int x, int y, PerlinNoiseParameters _target)
     {
@@ -100,8 +147,8 @@ public class ProceduralTerrain : MonoBehaviour
     private void GeneratePerlin()
     {
         float[,] heightMap;
+        heightMap = terrainData.GetHeights(0,0, terrainData.heightmapWidth, terrainData.heightmapHeight);
 
-        heightMap = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
         for (int x = 0; x < terrainData.heightmapWidth; x++)
         {
             for (int y = 0; y < terrainData.heightmapHeight; y++)
