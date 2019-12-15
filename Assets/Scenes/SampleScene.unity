@@ -365,8 +365,8 @@ MonoBehaviour:
     tileSize: {x: 10, y: 10}
     minSteepness: 0
     maxSteepness: 37
-    color1: {r: 1, g: 0.9696857, b: 0, a: 1}
-    color2: {r: 0, g: 0.17391205, b: 1, a: 1}
+    color1: {r: 1, g: 1, b: 1, a: 1}
+    color2: {r: 1, g: 1, b: 1, a: 1}
     colorThreshold: 0.1
   - texture: {fileID: 2800000, guid: 858e483d613d848cb935156b41553e4d, type: 3}
     minHeight: 0.02

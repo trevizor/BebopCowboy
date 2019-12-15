@@ -105,8 +105,6 @@ public class ProceduralTerrain : MonoBehaviour
     void GenerateVegetation ()
     {
         Vector3 terrainOriginalSize = terrainData.size;
-        TerrainData scaledTerrainData = terrainData;
-        scaledTerrainData.size = new Vector3(1000, 500, 1000);
         terrainData.size = new Vector3(1000, 500, 1000);
         int terrainLayer = LayerMask.GetMask("Terrain");
         int maximumTrees = 20000;
@@ -158,6 +156,10 @@ public class ProceduralTerrain : MonoBehaviour
                         instance.lightmapColor = currentVeg.lightColor;
                         instance.heightScale = Random.Range(currentVeg.minScale, currentVeg.maxScale);
                         instance.widthScale = Random.Range(currentVeg.minScale, currentVeg.maxScale); //TODO: add min width and max width
+
+                        instance.position = new Vector3(instance.position.x * terrainData.size.x/terrainData.alphamapWidth,
+                                instance.position.y,
+                                instance.position.z * terrainData.size.z/terrainData.alphamapHeight);
 
                         allVegetation.Add(instance);
                         if (allVegetation.Count >= maximumTrees) goto TREESDONE;
@@ -212,7 +214,7 @@ public class ProceduralTerrain : MonoBehaviour
             {
                 Color col = texturePixels[c];
                 float grayValue = (col.r + col.g + col.b)*1.2f / 3f;
-                col.r = col.b = col.g = grayValue;
+                //col.r = col.b = col.g = grayValue;
                 targetColor = Color.Lerp(sh.color2, sh.color1, grayValue - sh.colorThreshold);
                 col.r *= targetColor.r;
                 col.g *= targetColor.g;
