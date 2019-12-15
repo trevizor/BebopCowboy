@@ -14,6 +14,18 @@ public class ProceduralTerrain : MonoBehaviour
     float MPDroughness = 2.0f;
 
     [System.Serializable]
+    public class PlanetColors
+    {
+        public Color sky = Color.white;
+        public Color cloud = Color.white;
+        public Color ground = Color.white;
+        public Color grass = Color.white;
+        public Color rock = Color.white;
+        public Color snow = Color.white;
+        public Color trees = Color.white;
+    }
+
+    [System.Serializable]
     public class SplatHeights
     {
         public Texture2D texture = null;
@@ -23,6 +35,11 @@ public class ProceduralTerrain : MonoBehaviour
         public Vector2 tileSize = new Vector2(50f, 50f);
         public float minSteepness = 0.0f;
         public float maxSteepness = 25f;
+        [Tooltip("Bright area color - most prominent")]
+        public Color color1 = Color.white;
+        [Tooltip("Dark area color - less prominent")]
+        public Color color2 = Color.white;
+        public float colorThreshold = 0.5f;
     }
 
     [System.Serializable]
@@ -37,6 +54,10 @@ public class ProceduralTerrain : MonoBehaviour
         public float maxScale = 1.05f;
         public int maximumTrees = 5000;
         public int treeSpacing = 5;
+        public float density = 0.5f;
+        public Color color1 = Color.white;
+        public Color color2 = Color.gray;
+        public Color lightColor = Color.white;
     }
 
     public List<SplatHeights> splatHeights = new List<SplatHeights>()
@@ -61,13 +82,20 @@ public class ProceduralTerrain : MonoBehaviour
 
         PerlinList = new List<PerlinNoiseParameters>();
         VoronoiList = new List<VoronoiParameters>();
-        Random.InitState(13666020); //init state must come from the level seed
+        //maybe we can get some way to generate noise only on the voronoi surface? create a temp heightmap and apply some perlin only to it.
+        Random.InitState(2); //init state must come from the level seed
+        Camera.main.backgroundColor = Color.white;
         AddDebugValues();
         //MidPointDisplacement();
         GenerateVoronoi();
+        
+        Smooth();
+        Smooth();
+        Smooth();
         Smooth();
         Smooth();
         GeneratePerlin();
+        Smooth();
         GenerateVegetation();
         SplatMaps();
     }
@@ -76,9 +104,13 @@ public class ProceduralTerrain : MonoBehaviour
 
     void GenerateVegetation ()
     {
-        int maximumTrees = 5000;
-        int treeSpacing = 5;
-
+        Vector3 terrainOriginalSize = terrainData.size;
+        TerrainData scaledTerrainData = terrainData;
+        scaledTerrainData.size = new Vector3(1000, 500, 1000);
+        terrainData.size = new Vector3(1000, 500, 1000);
+        int terrainLayer = LayerMask.GetMask("Terrain");
+        int maximumTrees = 20000;
+        int treeSpacing = 10;
         TreePrototype[] newTreePrototypes;
         newTreePrototypes = new TreePrototype[vegetationList.Count];
         int tindex = 0;
@@ -90,24 +122,79 @@ public class ProceduralTerrain : MonoBehaviour
         }
 
         terrainData.treePrototypes = newTreePrototypes;
+
+        List<TreeInstance> allVegetation = new List<TreeInstance>();
+        terrainData.treeInstances = allVegetation.ToArray(); //clearing old trees
+        for (int z = treeSpacing; z <terrainData.size.z- treeSpacing; z += treeSpacing)
+        {
+            for (int x = treeSpacing; x < terrainData.size.x- treeSpacing; x += treeSpacing)
+            {
+                //TODO create vegetation groups
+                for (int tp = 0; tp < terrainData.treePrototypes.Length; tp++)
+                {
+                    VegetationData currentVeg = vegetationList[tp];
+                    if (Random.Range(0.0f, 1f) > currentVeg.density) break;
+                    float minHeight = currentVeg.minHeight;
+                    float maxHeight = currentVeg.maxHeight;
+                    float minSteepness = currentVeg.minSteepness;
+                    float maxSteepness = currentVeg.maxSteepness;
+                    int newZ = z + Mathf.RoundToInt(Random.Range(-treeSpacing, treeSpacing));
+                    int newX = x + Mathf.RoundToInt(Random.Range(-treeSpacing, treeSpacing));
+
+                    float thisHeight = terrainData.GetHeight(newX, newZ) / terrainData.size.y;
+                    float steepness = terrainData.GetSteepness(newX, newZ);
+                    if (thisHeight >= minHeight && thisHeight <= maxHeight &&
+                        steepness >= minSteepness && steepness <= maxSteepness)
+                    {
+                        TreeInstance instance = new TreeInstance();
+                        instance.prototypeIndex = tp;
+                        instance.position = new Vector3(newX / terrainData.size.x,
+                                                        terrainData.size.y,
+                                                        newZ / terrainData.size.z);
+                        
+
+                        instance.rotation = Random.Range(0, 360);
+                        instance.color = Color.Lerp(currentVeg.color1, currentVeg.color2, Random.Range(0f, 1f));
+                        instance.lightmapColor = currentVeg.lightColor;
+                        instance.heightScale = Random.Range(currentVeg.minScale, currentVeg.maxScale);
+                        instance.widthScale = Random.Range(currentVeg.minScale, currentVeg.maxScale); //TODO: add min width and max width
+
+                        allVegetation.Add(instance);
+                        if (allVegetation.Count >= maximumTrees) goto TREESDONE;
+                    }
+                };
+            };
+        };
+
+    TREESDONE:
+        
+        List<TreeInstance> newVegetation = new List<TreeInstance>();
+
+        foreach (TreeInstance tree in allVegetation)
+        {
+            TreeInstance newTree = tree;
+            Vector3 treeWorldPos = new Vector3(tree.position.x * terrainData.size.x,
+                            terrainData.size.y,
+                            tree.position.z * terrainData.size.z
+                            );
+            RaycastHit hit;
+            int layerMask = 1 << terrainLayer;
+            if (Physics.Raycast(treeWorldPos, -Vector3.up, out hit, 1000, Physics.DefaultRaycastLayers))
+            {
+                float treeHeight = (hit.point.y - this.transform.position.y) / terrainData.size.y;
+                newTree.position = new Vector3(tree.position.x, treeHeight, tree.position.z);
+            }
+
+            newVegetation.Add(newTree);
+        }
+
+        terrainData.size = terrainOriginalSize; //TODO: some treess keep floating because of the new terrain scale. maybe do the raycast after the scale?
+        allVegetation = newVegetation;
+        terrainData.treeInstances = allVegetation.ToArray();
+        
+
     }
 
-
-    float GetSteepness(float[,] heightmap, int x, int y, int width, int height)
-    {
-        float h = heightmap[x, y];
-        int nx = x + 1;
-        int ny = y + 1;
-        //checks other direction if on heightmap margin
-        if (nx > width - 1) nx = x - 1;
-        if (ny > height - 1) ny = y - 1;
-
-        float dx = heightmap[nx, y] - h;
-        float dy = heightmap[x, ny] - h;
-        Vector2 gradient = new Vector2(dx, dy);
-        float steep = gradient.magnitude;
-        return steep;
-    }
     
     public void SplatMaps ()
     {
@@ -115,8 +202,26 @@ public class ProceduralTerrain : MonoBehaviour
         newSplatPrototypes = new TerrainLayer[splatHeights.Count];int spindex = 0;
         foreach (SplatHeights sh in splatHeights)
         {
+            //here we will edit the texture!
+            Texture2D newTexture = new Texture2D(sh.texture.width, sh.texture.height);
+            
+            Color[] texturePixels = sh.texture.GetPixels(0, 0, sh.texture.width, sh.texture.height);
+            Color targetColor = sh.color1; //temporary, this later gets converted between dark and light colors
+
+            for (int c = 0; c< texturePixels.Length; c++)
+            {
+                Color col = texturePixels[c];
+                float grayValue = (col.r + col.g + col.b)*1.2f / 3f;
+                col.r = col.b = col.g = grayValue;
+                targetColor = Color.Lerp(sh.color2, sh.color1, grayValue - sh.colorThreshold);
+                col.r *= targetColor.r;
+                col.g *= targetColor.g;
+                col.b *= targetColor.b;
+                texturePixels[c] = col;
+            }
+            newTexture.SetPixels(0,0, newTexture.width, newTexture.height, texturePixels);
             newSplatPrototypes[spindex] = new TerrainLayer();
-            newSplatPrototypes[spindex].diffuseTexture = sh.texture;
+            newSplatPrototypes[spindex].diffuseTexture = newTexture;
             newSplatPrototypes[spindex].tileOffset = sh.tileOffset;
             newSplatPrototypes[spindex].tileSize = sh.tileSize;
             newSplatPrototypes[spindex].diffuseTexture.Apply(true);
@@ -180,8 +285,8 @@ public class ProceduralTerrain : MonoBehaviour
         float[,] heightMap = terrainData.GetHeights(0,0, terrainData.heightmapWidth, terrainData.heightmapHeight);
         int width = terrainData.heightmapWidth - 1;
         int squareSize = width;
-        float heightMin = -0.01f;
-        float heightMax = 1f;
+        float heightMin = -0.02f;
+        float heightMax = 0.7f;
         float heightDampener = (float)Mathf.Pow(MPDheightDampenerPower, -1 * MPDroughness);
         
         int cornerX, cornerY;
@@ -280,8 +385,8 @@ public class ProceduralTerrain : MonoBehaviour
                     new Vector2(1,0),
                     new Vector2(-1,1),
                     new Vector2(0,1),
-                    new Vector2(1,1),
-                    new Vector2(-1,-2),
+                    new Vector2(1,1)
+                    /*new Vector2(-1,-2),
                     new Vector2(0,-2),
                     new Vector2(1,-2),
                     new Vector2(-1,2),
@@ -296,7 +401,7 @@ public class ProceduralTerrain : MonoBehaviour
                     new Vector2(2,0),
                     new Vector2(2,1),
                     new Vector2(2,-2),
-                    new Vector2(2,2)
+                    new Vector2(2,2)*/
                 };
         float avgHeight = 0f;
 
@@ -437,13 +542,14 @@ public class ProceduralTerrain : MonoBehaviour
 
     public void AddDebugValues() {
 
+        int perlinOffset = (int) Random.Range(0f, 1200f);
 
         PerlinList.Add(
             new PerlinNoiseParameters("Mountains",
             0.005f,// _perlinXScale
             0.005f,
-            50, // _perlinOffsetX
-            50,
+            perlinOffset, // _perlinOffsetX
+            perlinOffset,
             16, // _perlinOctaves
             1f, // _perlinScaleModifier
             0.4f, // _perlinPersistance
@@ -458,8 +564,8 @@ public class ProceduralTerrain : MonoBehaviour
             new PerlinNoiseParameters("High Mountains", // _name
             0.005f, // _perlinXScale
             0.005f, // _perlinYScale
-            48, // _perlinOffsetX
-            51, // _perlinOffsetY
+            perlinOffset, // _perlinOffsetX
+            perlinOffset, // _perlinOffsetY
             10, // _perlinOctaves
             0.8f, // _perlinScaleModifier
             0.6f, // _perlinPersistance
@@ -473,8 +579,8 @@ public class ProceduralTerrain : MonoBehaviour
             new PerlinNoiseParameters("Plains Noise", // _name
             0.001f, // _perlinXScale
             0.001f, // _perlinYScale
-            0, // _perlinOffsetX
-            0, // _perlinOffsetY
+            perlinOffset, // _perlinOffsetX
+            perlinOffset, // _perlinOffsetY
             10, // _perlinOctaves
             0.8f, // _perlinScaleModifier
             1.1f, // _perlinPersistance
@@ -488,8 +594,8 @@ public class ProceduralTerrain : MonoBehaviour
             new PerlinNoiseParameters("Plains Level", // _name
             0.001f, // _perlinXScale
             0.001f, // _perlinYScale
-            0, // _perlinOffsetX
-            0, // _perlinOffsetY
+            perlinOffset, // _perlinOffsetX
+            perlinOffset, // _perlinOffsetY
             10, // _perlinOctaves
             12f, // _perlinScaleModifier
             1.1f, // _perlinPersistance
@@ -507,8 +613,8 @@ public class ProceduralTerrain : MonoBehaviour
                 0.1f,
                 0.4f,
                 1f,
-                2,
-                5,
+                0,
+                6,
                 true,
                 1.2f
                 )
@@ -516,14 +622,14 @@ public class ProceduralTerrain : MonoBehaviour
         VoronoiList.Add(
             new VoronoiParameters(
                 "High Mountain",
-                0.1f,
-                0.5f,
+                0.2f,
+                0.45f,
                 1f,
-                0.6f,
-                1,
-                1,
+                0.32f,
+                0,
+                4,
                 true,
-                1.27f
+                0.89f
                 )
             );
 
