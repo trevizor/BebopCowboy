@@ -24,7 +24,7 @@ RenderSettings:
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 3
+  m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
   m_HaloStrength: 0.5
@@ -216,7 +216,7 @@ Camera:
   m_GameObject: {fileID: 534669902}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 2
+  m_ClearFlags: 1
   m_BackGroundColor: {r: 0.30286577, g: 0.42875573, b: 0.7735849, a: 0}
   m_projectionMatrixMode: 1
   m_SensorSize: {x: 36, y: 24}
@@ -307,7 +307,7 @@ Terrain:
   m_TreeBillboardDistance: 437
   m_TreeCrossFadeLength: 33
   m_TreeMaximumFullLODCount: 2000
-  m_DetailObjectDistance: 121
+  m_DetailObjectDistance: 250
   m_DetailObjectDensity: 1
   m_HeightmapPixelError: 5
   m_SplatMapDistance: 1000
@@ -358,15 +358,18 @@ MonoBehaviour:
   terrain: {fileID: 903789863}
   terrainData: {fileID: 15600000, guid: 3acd888f8c96fda47b31aebd1df45619, type: 2}
   splatHeights:
-  - texture: {fileID: 2800000, guid: dd49ed99f55924d13bacefd240626bc5, type: 3}
+  - texture: {fileID: 2800000, guid: 3a7915e2b99cd4d5a9f01b075f2ad6e9, type: 3}
     minHeight: 0
-    maxHeight: 0.03
+    maxHeight: 0.021
     tileOffset: {x: 0, y: 0}
-    tileSize: {x: 10, y: 10}
+    tileSize: {x: 5, y: 5}
     minSteepness: 0
     maxSteepness: 37
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 1, g: 1, b: 1, a: 1}
+    redTint: {r: 1, g: 0, b: 0, a: 1}
+    greenTint: {r: 0, g: 1, b: 0, a: 1}
+    blueTint: {r: 0, g: 0, b: 1, a: 1}
     colorThreshold: 0.1
   - texture: {fileID: 2800000, guid: 858e483d613d848cb935156b41553e4d, type: 3}
     minHeight: 0.02
@@ -377,6 +380,9 @@ MonoBehaviour:
     maxSteepness: 37
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 1, g: 1, b: 1, a: 1}
+    redTint: {r: 1, g: 0, b: 0, a: 1}
+    greenTint: {r: 0, g: 1, b: 0, a: 1}
+    blueTint: {r: 0, g: 0, b: 1, a: 1}
     colorThreshold: 0.5
   - texture: {fileID: 2800000, guid: 70ad2695569e2454ea6caf1faa1853c0, type: 3}
     minHeight: 0.09
@@ -387,6 +393,9 @@ MonoBehaviour:
     maxSteepness: 37
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 1, g: 1, b: 1, a: 1}
+    redTint: {r: 1, g: 0, b: 0, a: 1}
+    greenTint: {r: 0, g: 1, b: 0, a: 1}
+    blueTint: {r: 0, g: 0, b: 1, a: 1}
     colorThreshold: 0.5
   - texture: {fileID: 2800000, guid: bcf1aee4cb4974e7694ecd794826771e, type: 3}
     minHeight: 0.1
@@ -397,6 +406,9 @@ MonoBehaviour:
     maxSteepness: 37
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 1, g: 1, b: 1, a: 1}
+    redTint: {r: 1, g: 0, b: 0, a: 1}
+    greenTint: {r: 0, g: 1, b: 0, a: 1}
+    blueTint: {r: 0, g: 0, b: 1, a: 1}
     colorThreshold: 0.5
   - texture: {fileID: 2800000, guid: 27f896e8cb56a467885c23b4ab985df8, type: 3}
     minHeight: 0.15
@@ -407,6 +419,9 @@ MonoBehaviour:
     maxSteepness: 40
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 0.7075472, g: 0.7075472, b: 0.7075472, a: 1}
+    redTint: {r: 1, g: 0, b: 0, a: 1}
+    greenTint: {r: 0, g: 1, b: 0, a: 1}
+    blueTint: {r: 0, g: 0, b: 1, a: 1}
     colorThreshold: 0.5
   - texture: {fileID: 2800000, guid: e13ad7a9d4dc84697aaa540e7548d65b, type: 3}
     minHeight: 0
@@ -417,6 +432,9 @@ MonoBehaviour:
     maxSteepness: 90
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 0.64501625, g: 0.67800003, b: 0.66334057, a: 1}
+    redTint: {r: 1, g: 0, b: 0, a: 1}
+    greenTint: {r: 0, g: 1, b: 0, a: 1}
+    blueTint: {r: 0, g: 0, b: 1, a: 1}
     colorThreshold: 0.5
   vegetationList:
   - mesh: {fileID: 100000, guid: 43202a31bd1113061100b7a844295342, type: 3}
@@ -460,44 +478,41 @@ MonoBehaviour:
     lightColor: {r: 1, g: 1, b: 1, a: 1}
   detailList:
   - prototype: {fileID: 0}
-    prototypeTexture: {fileID: 2800000, guid: a9302d63bd11830a1100b7fa44295342, type: 3}
+    prototypeTexture: {fileID: 2800000, guid: 4c3440f2bd11488b1100df5944295342, type: 3}
     minHeight: 0
-    maxHeight: 0.2
+    maxHeight: 0.4
     minSteepness: 0
-    maxSteepness: 25
-    minScale: 0.4
-    maxScale: 1
-    density: 1
-    overlap: 0
-    feather: 0.05
+    maxSteepness: 20
+    heightScaleRange: {x: 0.3, y: 1}
+    widthScaleRange: {x: 1, y: 1}
+    density: 0.6
+    feather: 0
     color1: {r: 1, g: 1, b: 1, a: 1}
-    color2: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    color2: {r: 0.735849, g: 0.735849, b: 0.735849, a: 1}
     lightColor: {r: 1, g: 1, b: 1, a: 1}
   - prototype: {fileID: 0}
     prototypeTexture: {fileID: 2800000, guid: ba0dbc11bd11158b1100de1b44295342, type: 3}
-    minHeight: 0.1
-    maxHeight: 0.3
+    minHeight: 0
+    maxHeight: 0.05
     minSteepness: 0
-    maxSteepness: 25
-    minScale: 0.95
-    maxScale: 1.05
-    density: 0.8
-    overlap: 0
-    feather: 0.05
+    maxSteepness: 90
+    heightScaleRange: {x: 1, y: 3}
+    widthScaleRange: {x: 0.9, y: 1.1}
+    density: 0.6
+    feather: 0.005
     color1: {r: 1, g: 1, b: 1, a: 1}
-    color2: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    color2: {r: 0.7372549, g: 0.7302811, b: 0.6753255, a: 1}
     lightColor: {r: 1, g: 1, b: 1, a: 1}
   - prototype: {fileID: 100000, guid: 8e41f14c6552d48e6a7992aaecc808e4, type: 3}
     prototypeTexture: {fileID: 0}
-    minHeight: 0.1
+    minHeight: 0.15
     maxHeight: 0.8
     minSteepness: 0
-    maxSteepness: 25
-    minScale: 0.95
-    maxScale: 1.05
-    density: 0.01
-    overlap: 0
-    feather: 0.05
+    maxSteepness: 50
+    heightScaleRange: {x: 0.4, y: 1.3}
+    widthScaleRange: {x: 0.4, y: 1.3}
+    density: 0.008
+    feather: 0.01
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     lightColor: {r: 1, g: 1, b: 1, a: 1}

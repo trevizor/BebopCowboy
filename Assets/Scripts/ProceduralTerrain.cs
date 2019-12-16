@@ -39,6 +39,9 @@ public class ProceduralTerrain : MonoBehaviour
         public Color color1 = Color.white;
         [Tooltip("Dark area color - less prominent")]
         public Color color2 = Color.white;
+        public Color redTint = Color.white;
+        public Color greenTint = Color.white;
+        public Color blueTint = Color.white;
         public float colorThreshold = 0.5f;
     }
 
@@ -69,11 +72,10 @@ public class ProceduralTerrain : MonoBehaviour
         public float maxHeight = 0.2f;
         public float minSteepness = 0.0f;
         public float maxSteepness = 25f;
-        public float minScale = 0.95f;
-        public float maxScale = 1.05f;
+        public Vector2 heightScaleRange = new Vector2(0.9f, 1.1f);
+        public Vector2 widthScaleRange = new Vector2(0.9f, 1.1f);
         public float density = 0.5f;
-        public float overlap = 0.0f;
-        public float feather = 0.05f;
+        public float feather = 0.05f; //random applie to min and max height to create blending
         public Color color1 = Color.white;
         public Color color2 = Color.gray;
         public Color lightColor = Color.white;
@@ -136,6 +138,10 @@ public class ProceduralTerrain : MonoBehaviour
             newDetailPrototypes[di].prototypeTexture = d.prototypeTexture;
             newDetailPrototypes[di].healthyColor = d.color1;
             newDetailPrototypes[di].dryColor = d.color2;
+            newDetailPrototypes[di].minHeight = d.heightScaleRange.x;
+            newDetailPrototypes[di].maxHeight = d.heightScaleRange.y;
+            newDetailPrototypes[di].minWidth = d.heightScaleRange.x;
+            newDetailPrototypes[di].maxWidth = d.heightScaleRange.y;
             if (newDetailPrototypes[di].prototype)
             {
                 newDetailPrototypes[di].usePrototypeMesh = true;
@@ -143,33 +149,38 @@ public class ProceduralTerrain : MonoBehaviour
             } else
             {
                 newDetailPrototypes[di].usePrototypeMesh = false;
-                newDetailPrototypes[di].renderMode = DetailRenderMode.GrassBillboard;
+                newDetailPrototypes[di].renderMode = DetailRenderMode.Grass;
             }
             di++;
         }
         terrainData.detailPrototypes = newDetailPrototypes;
 
         int detailSpacing = 1;
-
+        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth,
+                                            terrainData.heightmapHeight);
         for (int i = 0; i< terrainData.detailPrototypes.Length; i++)
         {
-            int[,] detailMap = new int[terrainData.detailWidth, terrainData.detailHeight];
+            int[,] detailMap = new int[terrainData.detailResolution, terrainData.detailResolution];
             DetailData currentDetail = detailList[i];
             float minSteepness = currentDetail.minSteepness;
             float maxSteepness = currentDetail.maxSteepness;
             float minHeight = currentDetail.minHeight;
             float maxHeight = currentDetail.maxHeight;
 
-            for (int y = 0; y < terrainData.detailHeight; y+= detailSpacing)
+            for (int y = 0; y < terrainData.detailHeight; y += detailSpacing)
             {
                 for (int x = 0; x < terrainData.detailWidth; x += detailSpacing)
                 {
-                    float thisHeight = terrainData.GetHeight(x, y) / terrainData.size.y;
-                    float steepness = terrainData.GetSteepness(y, x);
+                    if (Random.Range(0f, 1f) > detailList[i].density) continue;
+                    int xHM = (int)(x / (float)terrainData.detailResolution * terrainData.heightmapWidth);
+                    int yHM = (int)(y / (float)terrainData.detailResolution * terrainData.heightmapHeight);
+
+                    float thisHeight = heightMap[yHM, xHM] + Random.Range(-currentDetail.feather, currentDetail.feather); //adds the feather to simulate the blending
+                    float steepness = terrainData.GetSteepness(xHM / (float)terrainData.size.x,
+                                                                yHM / (float)terrainData.size.z);
                     if (thisHeight >= minHeight && thisHeight <= maxHeight &&
                         steepness >= minSteepness && steepness <= maxSteepness)
-                    {
-                        if (Random.Range(0f, 1f) > detailList[i].density) continue;
+                    {    
                         detailMap[y, x] = 1;
                     }
                         
@@ -219,7 +230,7 @@ public class ProceduralTerrain : MonoBehaviour
                     int newX = x + Mathf.RoundToInt(Random.Range(-treeSpacing, treeSpacing));
 
                     float thisHeight = terrainData.GetHeight(newX, newZ) / terrainData.size.y;
-                    float steepness = terrainData.GetSteepness(newZ, newX);
+                    float steepness = terrainData.GetSteepness(newX, newZ);
                     if (thisHeight >= minHeight && thisHeight <= maxHeight &&
                         steepness >= minSteepness && steepness <= maxSteepness)
                     {
@@ -292,13 +303,22 @@ public class ProceduralTerrain : MonoBehaviour
             for (int c = 0; c< texturePixels.Length; c++)
             {
                 Color col = texturePixels[c];
+                Color tempCol = Color.black;
                 float grayValue = (col.r + col.g + col.b)*1.2f / 3f;
                 //col.r = col.b = col.g = grayValue;
                 targetColor = Color.Lerp(sh.color2, sh.color1, grayValue - sh.colorThreshold);
-                col.r *= targetColor.r;
-                col.g *= targetColor.g;
-                col.b *= targetColor.b;
-                texturePixels[c] = col;
+                tempCol.r += sh.redTint.r * col.r;
+                tempCol.g += sh.redTint.g * col.r;
+                tempCol.b += sh.redTint.b * col.r;
+                tempCol.r += sh.greenTint.r * col.g;
+                tempCol.g += sh.greenTint.g * col.g;
+                tempCol.b += sh.greenTint.b * col.g;
+                tempCol.r += sh.blueTint.r * col.b;
+                tempCol.g += sh.blueTint.g * col.b;
+                tempCol.b += sh.blueTint.b * col.b;
+                
+                tempCol.a = 0f;
+                texturePixels[c] = tempCol;
             }
             newTexture.SetPixels(0,0, newTexture.width, newTexture.height, texturePixels);
             newSplatPrototypes[spindex] = new TerrainLayer();
