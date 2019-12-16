@@ -263,6 +263,98 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 26.330002, y: 0, z: 0}
+--- !u!1 &674426595
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 674426599}
+  - component: {fileID: 674426598}
+  - component: {fileID: 674426597}
+  - component: {fileID: 674426596}
+  m_Layer: 0
+  m_Name: water
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!64 &674426596
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 674426595}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 0
+  m_CookingOptions: 14
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &674426597
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 674426595}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 5dcc1703473f7e54d8795bc0236c3f47, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 0
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+--- !u!33 &674426598
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 674426595}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &674426599
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 674426595}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1653.5831, y: -50, z: 470.3822}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &903789861
 GameObject:
   m_ObjectHideFlags: 0
@@ -357,6 +449,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   terrain: {fileID: 903789863}
   terrainData: {fileID: 15600000, guid: 3acd888f8c96fda47b31aebd1df45619, type: 2}
+  waterLevel: -0.02
+  waterGO: {fileID: 674426595}
   splatHeights:
   - texture: {fileID: 2800000, guid: 3a7915e2b99cd4d5a9f01b075f2ad6e9, type: 3}
     minHeight: 0
@@ -483,10 +577,10 @@ MonoBehaviour:
     maxHeight: 0.4
     minSteepness: 0
     maxSteepness: 20
-    heightScaleRange: {x: 0.3, y: 1}
+    heightScaleRange: {x: 0.3, y: 0.8}
     widthScaleRange: {x: 1, y: 1}
-    density: 0.6
-    feather: 0
+    density: 0.7
+    feather: 0.02
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 0.735849, g: 0.735849, b: 0.735849, a: 1}
     lightColor: {r: 1, g: 1, b: 1, a: 1}
@@ -496,10 +590,10 @@ MonoBehaviour:
     maxHeight: 0.05
     minSteepness: 0
     maxSteepness: 90
-    heightScaleRange: {x: 1, y: 3}
-    widthScaleRange: {x: 0.9, y: 1.1}
-    density: 0.6
-    feather: 0.005
+    heightScaleRange: {x: 2, y: 4}
+    widthScaleRange: {x: 0.8, y: 2}
+    density: 0.5
+    feather: 0.008
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 0.7372549, g: 0.7302811, b: 0.6753255, a: 1}
     lightColor: {r: 1, g: 1, b: 1, a: 1}
@@ -529,7 +623,7 @@ GameObject:
   - component: {fileID: 1857607659}
   - component: {fileID: 1857607658}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: PlayerScale
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -601,7 +695,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1857607657}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 24, y: 10.6, z: -8}
+  m_LocalPosition: {x: 49.5, y: 11.88, z: 36.9}
   m_LocalScale: {x: 0.71399, y: 1.8, z: 0.74584}
   m_Children: []
   m_Father: {fileID: 0}

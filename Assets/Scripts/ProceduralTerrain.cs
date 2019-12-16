@@ -9,6 +9,9 @@ public class ProceduralTerrain : MonoBehaviour
     public Terrain terrain;
     public TerrainData terrainData;
 
+    public float waterLevel = 0.05f;
+    public GameObject waterGO = null;
+
     //Midpoint displacement
     float MPDheightDampenerPower = 2.0f;
     float MPDroughness = 2.0f;
@@ -123,7 +126,21 @@ public class ProceduralTerrain : MonoBehaviour
         Smooth();
         GenerateVegetation();
         AddDetails();
+        AddWater();
         SplatMaps();
+    }
+
+    void AddWater ()
+    {
+        GameObject water = GameObject.Find("water");
+        if (!water)
+        {
+            water = Instantiate<GameObject>(waterGO, this.transform.position, this.transform.rotation);
+            water.name = "water";
+        }
+
+        water.transform.position = this.transform.position + new Vector3(terrainData.size.x /2, waterLevel * terrainData.size.y, terrainData.size.z /2);
+        water.transform.localScale = new Vector3(terrainData.size.x, 1, terrainData.size.z);
     }
 
     void AddDetails ()
