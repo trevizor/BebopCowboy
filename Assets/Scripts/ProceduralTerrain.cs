@@ -60,6 +60,25 @@ public class ProceduralTerrain : MonoBehaviour
         public Color lightColor = Color.white;
     }
 
+    [System.Serializable]
+    public class DetailData
+    {
+        public GameObject prototype = null;
+        public Texture2D prototypeTexture = null;
+        public float minHeight = 0.1f;
+        public float maxHeight = 0.2f;
+        public float minSteepness = 0.0f;
+        public float maxSteepness = 25f;
+        public float minScale = 0.95f;
+        public float maxScale = 1.05f;
+        public float density = 0.5f;
+        public float overlap = 0.0f;
+        public float feather = 0.05f;
+        public Color color1 = Color.white;
+        public Color color2 = Color.gray;
+        public Color lightColor = Color.white;
+    }
+
     public List<SplatHeights> splatHeights = new List<SplatHeights>()
     {
         new SplatHeights()
@@ -67,6 +86,10 @@ public class ProceduralTerrain : MonoBehaviour
     public List<VegetationData> vegetationList = new List<VegetationData>()
     {
         new VegetationData()
+    };
+    public List<DetailData> detailList = new List<DetailData>()
+    {
+        new DetailData()
     };
 
     public List<PerlinNoiseParameters> PerlinList = new List<PerlinNoiseParameters>();
@@ -97,10 +120,66 @@ public class ProceduralTerrain : MonoBehaviour
         GeneratePerlin();
         Smooth();
         GenerateVegetation();
+        AddDetails();
         SplatMaps();
     }
 
+    void AddDetails ()
+    {
+        DetailPrototype[] newDetailPrototypes;
+        newDetailPrototypes = new DetailPrototype[detailList.Count];
+        int di = 0;
+        foreach (DetailData d in detailList)
+        {
+            newDetailPrototypes[di] = new DetailPrototype();
+            newDetailPrototypes[di].prototype = d.prototype;
+            newDetailPrototypes[di].prototypeTexture = d.prototypeTexture;
+            newDetailPrototypes[di].healthyColor = d.color1;
+            newDetailPrototypes[di].dryColor = d.color2;
+            if (newDetailPrototypes[di].prototype)
+            {
+                newDetailPrototypes[di].usePrototypeMesh = true;
+                newDetailPrototypes[di].renderMode = DetailRenderMode.VertexLit;
+            } else
+            {
+                newDetailPrototypes[di].usePrototypeMesh = false;
+                newDetailPrototypes[di].renderMode = DetailRenderMode.GrassBillboard;
+            }
+            di++;
+        }
+        terrainData.detailPrototypes = newDetailPrototypes;
 
+        int detailSpacing = 1;
+
+        for (int i = 0; i< terrainData.detailPrototypes.Length; i++)
+        {
+            int[,] detailMap = new int[terrainData.detailWidth, terrainData.detailHeight];
+            DetailData currentDetail = detailList[i];
+            float minSteepness = currentDetail.minSteepness;
+            float maxSteepness = currentDetail.maxSteepness;
+            float minHeight = currentDetail.minHeight;
+            float maxHeight = currentDetail.maxHeight;
+
+            for (int y = 0; y < terrainData.detailHeight; y+= detailSpacing)
+            {
+                for (int x = 0; x < terrainData.detailWidth; x += detailSpacing)
+                {
+                    float thisHeight = terrainData.GetHeight(x, y) / terrainData.size.y;
+                    float steepness = terrainData.GetSteepness(y, x);
+                    if (thisHeight >= minHeight && thisHeight <= maxHeight &&
+                        steepness >= minSteepness && steepness <= maxSteepness)
+                    {
+                        if (Random.Range(0f, 1f) > detailList[i].density) continue;
+                        detailMap[y, x] = 1;
+                    }
+                        
+                }
+            }
+            terrainData.SetDetailLayer(0,0, i, detailMap);
+        }
+
+
+    }
 
     void GenerateVegetation ()
     {
@@ -140,7 +219,7 @@ public class ProceduralTerrain : MonoBehaviour
                     int newX = x + Mathf.RoundToInt(Random.Range(-treeSpacing, treeSpacing));
 
                     float thisHeight = terrainData.GetHeight(newX, newZ) / terrainData.size.y;
-                    float steepness = terrainData.GetSteepness(newX, newZ);
+                    float steepness = terrainData.GetSteepness(newZ, newX);
                     if (thisHeight >= minHeight && thisHeight <= maxHeight &&
                         steepness >= minSteepness && steepness <= maxSteepness)
                     {
