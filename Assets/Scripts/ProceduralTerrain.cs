@@ -8,13 +8,9 @@ public class ProceduralTerrain : MonoBehaviour
     //public Vector2 heightRange = new Vector2(0.1f, 0.2f);
     public Terrain terrain;
     public TerrainData terrainData;
-
+    public int Seed = 42;
     public float waterLevel = 0.05f;
     public GameObject waterGO = null;
-
-    //Midpoint displacement
-    float MPDheightDampenerPower = 2.0f;
-    float MPDroughness = 2.0f;
 
     [System.Serializable]
     public class PlanetColors
@@ -84,6 +80,34 @@ public class ProceduralTerrain : MonoBehaviour
         public Color lightColor = Color.white;
     }
 
+    public enum ErosionType
+    {
+        Rain = 0,
+        Thermal = 1,
+        Tidal = 2,
+        River = 3,
+        Wind = 4
+    }
+
+    [System.Serializable]
+    public class ErosionData
+    {
+        public ErosionType type = ErosionType.Rain;
+        public int erodeRepeat = 1;
+        public float erosionStrength = 0.1f;
+        public int springsPerRiver = 5;
+        public float solubility = 0.01f;
+        public int droplets = 10;
+        public int erosionSmoothAmount = 2;
+        public float thermalDisplacementMultiplier = 0.01f;
+        public float dropletMinHeight = 0.3f;
+    }
+
+    public List<ErosionData> erosionList = new List<ErosionData>()
+    {
+        new ErosionData()
+    };
+
     public List<SplatHeights> splatHeights = new List<SplatHeights>()
     {
         new SplatHeights()
@@ -97,8 +121,13 @@ public class ProceduralTerrain : MonoBehaviour
         new DetailData()
     };
 
-    public List<PerlinNoiseParameters> PerlinList = new List<PerlinNoiseParameters>();
-    public List<VoronoiParameters> VoronoiList = new List<VoronoiParameters>();
+    public List<PerlinNoiseParameters> perlinList = new List<PerlinNoiseParameters>() {
+        new PerlinNoiseParameters()
+    };
+    public List<VoronoiParameters> voronoiList = new List<VoronoiParameters>()
+    {
+        new VoronoiParameters()
+    };
 
     // Start is called before the first frame update
     void Start()
@@ -108,27 +137,265 @@ public class ProceduralTerrain : MonoBehaviour
         float[,] heightMap = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
         terrainData.SetHeights(0, 0, heightMap);
 
-        PerlinList = new List<PerlinNoiseParameters>();
-        VoronoiList = new List<VoronoiParameters>();
+        //PerlinList = new List<PerlinNoiseParameters>();
+        //VoronoiList = new List<VoronoiParameters>();
+        //VoronoiList = new List<VoronoiParameters>();
         //maybe we can get some way to generate noise only on the voronoi surface? create a temp heightmap and apply some perlin only to it.
-        Random.InitState(2); //init state must come from the level seed
+        if (Seed == 0)
+            Seed = (int) Random.Range(0f, int.MaxValue);
+        Random.InitState(Seed); //init state must come from the level seed
         Camera.main.backgroundColor = Color.white;
-        AddDebugValues();
-        //MidPointDisplacement();
+        MidPointDisplacement();
         GenerateVoronoi();
+
+        heightMap = Smooth(heightMap);
+        heightMap = Smooth(heightMap);
+        heightMap = Smooth(heightMap);
+        heightMap = Smooth(heightMap);
+        heightMap = Smooth(heightMap);
+
         
-        Smooth();
-        Smooth();
-        Smooth();
-        Smooth();
-        Smooth();
         GeneratePerlin();
-        Smooth();
+        foreach (ErosionData erodeTarget in erosionList)
+        {
+            Erode(erodeTarget);
+        }
+        
         GenerateVegetation();
         AddDetails();
         AddWater();
         SplatMaps();
+
     }
+
+
+
+    void Erode (ErosionData _target)
+    {
+        for(var i = 0; i<_target.erodeRepeat; i++)
+        {
+            switch (_target.type)
+            {
+                case ErosionType.Rain:
+                    ErodeRain(_target);
+                    break;
+                case ErosionType.Tidal:
+                    ErodeTidal(_target);
+                    break;
+                case ErosionType.Thermal:
+                    ErodeThermal(_target);
+                    break;
+                case ErosionType.River:
+                    ErodeRiver(_target);
+                    break;
+                case ErosionType.Wind:
+                    ErodeWind(_target);
+                    break;
+            }
+        }
+    }
+
+    enum mergeMethod {
+        Additive = 0,
+        Subtract = 1,
+        Replace = 3,
+        ReplaceLower = 4,
+        ReplaceHigher = 5,
+        AddOnLower = 6,
+        AddOnHigher = 7,
+        SubOnLower = 8,
+        SubOnHigher = 9
+    };
+
+    void mergeHeightMap(float[,] _targetHeightMap, mergeMethod _merge)
+    {
+        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        switch (_merge)
+        {
+            case mergeMethod.Additive:
+                for (int j = 0; j < terrainData.heightmapWidth; j++)
+                {
+                    for (int k = 0; k < terrainData.heightmapHeight; k++)
+                    {
+                        heightMap[j, k] += _targetHeightMap[j, k];
+                    }
+                }
+                break;
+            case mergeMethod.Replace:
+                for (int j = 0; j < terrainData.heightmapWidth; j++)
+                {
+                    for (int k = 0; k < terrainData.heightmapHeight; k++)
+                    {
+                        heightMap[j, k] = _targetHeightMap[j, k];
+                    }
+                }
+                break;
+            case mergeMethod.Subtract:
+                for (int j = 0; j < terrainData.heightmapWidth; j++)
+                {
+                    for (int k = 0; k < terrainData.heightmapHeight; k++)
+                    {
+                        heightMap[j, k] -= _targetHeightMap[j, k];
+                    }
+                }
+                break;
+        }
+        
+        terrainData.SetHeights(0, 0, heightMap);
+    }
+
+    void ErodeRain (ErosionData _target)
+    {
+        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        float[,] rainHeightMap = createEmptyHeight();
+        for (int i = 0; i<_target.droplets; i++)
+        {
+            int x = Random.Range(0, terrainData.heightmapWidth);
+            int y = Random.Range(0, terrainData.heightmapHeight);
+            if(heightMap[(int)x, (int)y] > _target.dropletMinHeight)
+                rainHeightMap[x, y] = -_target.erosionStrength;
+        }
+        for (int smoothAmount = 0; smoothAmount < _target.erosionSmoothAmount; smoothAmount++)
+        {
+            rainHeightMap = Smooth(rainHeightMap);
+        }
+
+        mergeHeightMap(rainHeightMap, mergeMethod.Additive);
+    }
+
+    void ErodeTidal(ErosionData _target) //removes beaches and replaces then with small cliffs
+    {
+        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        float[,] erodedHeightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        for (int x = 0; x < terrainData.heightmapWidth; x++)
+        {
+            for (int y = 0; y < terrainData.heightmapHeight; y++)
+            {
+                List<Vector2> neightbours = GetNeighbours(x, y);
+                foreach (Vector2 n in neightbours)
+                {
+                    if (heightMap[x, y] < waterLevel && heightMap[(int)n.x, (int)n.y] > waterLevel)
+                    {
+                        erodedHeightMap[x, y] = waterLevel;
+                        erodedHeightMap[(int)n.x, (int)n.y] = waterLevel - _target.erosionStrength;
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < _target.erosionSmoothAmount; i++)
+        {
+            erodedHeightMap = Smooth(erodedHeightMap);
+        }
+
+
+        mergeHeightMap(erodedHeightMap, mergeMethod.Replace);
+
+    }
+    void ErodeThermal(ErosionData _target)
+    {
+        float[,] erodedHeightMap = terrainData.GetHeights(0,0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        for(int x = 0; x < terrainData.heightmapWidth; x++)
+        {
+            for (int y = 0; y < terrainData.heightmapHeight; y++)
+            {
+                List<Vector2> neightbours = GetNeighbours(x, y);
+                foreach(Vector2 n in neightbours){
+                    if(erodedHeightMap[x, y] > erodedHeightMap[(int)n.x, (int)n.y] + _target.erosionStrength)
+                    {
+                        float currentHeight = erodedHeightMap[x, y];
+                        erodedHeightMap[x, y] -= currentHeight * _target.thermalDisplacementMultiplier;
+                        erodedHeightMap[(int)n.x,(int)n.y] += currentHeight * _target.thermalDisplacementMultiplier;
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < _target.erosionSmoothAmount; i++)
+        {
+            erodedHeightMap = Smooth(erodedHeightMap);
+        }
+            
+
+        mergeHeightMap(erodedHeightMap, mergeMethod.Replace);
+    }
+    void ErodeRiver(ErosionData _target)
+    {
+        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        float[,] erosionMap = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
+
+        for(int i =0; i<_target.droplets; i++)
+        {
+            Vector2 dropletPosition = new Vector2(Random.Range(0, terrainData.heightmapWidth), Random.Range(0, terrainData.heightmapHeight));
+            if (heightMap[(int)dropletPosition.x, (int)dropletPosition.y] > _target.dropletMinHeight)
+            {
+                erosionMap[(int)dropletPosition.x, (int)dropletPosition.y] = _target.erosionStrength;
+                for (int j = 0; j < _target.springsPerRiver; j++)
+                {
+                    erosionMap = RunRiver(dropletPosition, heightMap, erosionMap, terrainData.heightmapWidth, terrainData.heightmapHeight, _target);
+                }
+            }
+                
+            
+        }
+        
+        for(int j = 0; j <_target.erosionSmoothAmount; j++)
+        {
+            erosionMap = Smooth(erosionMap);
+        }
+        //terrainData.SetHeights(0,0, erodedHeightMap);
+        mergeHeightMap(erosionMap, mergeMethod.Subtract);
+
+    }
+
+    float[,] RunRiver(Vector2 dropletPosition, float[,] heightMap, float[,] erosionMap, int width, int height, ErosionData _target)
+    {
+
+        while (erosionMap[(int)dropletPosition.x, (int)dropletPosition.y] > 0)
+        {
+            List<Vector2> neighbours = GetNeighbours((int) dropletPosition.x, (int) dropletPosition.y);
+            neighbours = ShuffleList(neighbours);
+            bool foundLower = false;
+            foreach (Vector2 n in neighbours)
+            {
+                if (heightMap[(int)n.x, (int)n.y] < heightMap[(int)dropletPosition.x, (int)dropletPosition.y])
+                {
+                    erosionMap[(int)n.x, (int)n.y] = erosionMap[(int)dropletPosition.x,
+                                                                (int)dropletPosition.y] - _target.solubility;
+                    dropletPosition = n;
+                    foundLower = true;
+                    break;
+                }
+            }
+            if (!foundLower)
+            {
+                erosionMap[(int)dropletPosition.x, (int)dropletPosition.y] -= _target.solubility;
+            }
+        }
+        return erosionMap;
+    }
+
+    private List<E> ShuffleList<E>(List<E> inputList)
+    {
+        List<E> randomList = new List<E>();
+
+        Random r = new Random();
+        int randomIndex = 0;
+        while (inputList.Count > 0)
+        {
+            randomIndex = Random.Range(0, inputList.Count); 
+            randomList.Add(inputList[randomIndex]); 
+            inputList.RemoveAt(randomIndex); 
+        }
+
+        return randomList;
+    }
+
+    void ErodeWind(ErosionData _target)
+    {
+
+    }
+
 
     void AddWater ()
     {
@@ -400,6 +667,9 @@ public class ProceduralTerrain : MonoBehaviour
 
     public void MidPointDisplacement() //with these parameters it creates a few holes and hills
     {
+        //Midpoint displacement
+        float MPDheightDampenerPower = 2.0f;
+        float MPDroughness = 2.0f;
         float[,] heightMap = terrainData.GetHeights(0,0, terrainData.heightmapWidth, terrainData.heightmapHeight);
         int width = terrainData.heightmapWidth - 1;
         int squareSize = width;
@@ -487,11 +757,34 @@ public class ProceduralTerrain : MonoBehaviour
         terrainData.SetHeights(0, 0, heightMap);
     }
 
+    private List<Vector2> GetNeighbours (int x, int y)
+    {
+        List<Vector2> returnValue = new List<Vector2>();
+        Vector2[] steps = {
+                    new Vector2(-1,-1),
+                    new Vector2(0,-1),
+                    new Vector2(1,-1),
+                    new Vector2(-1,0),
+                    new Vector2(0,0),
+                    new Vector2(1,0),
+                    new Vector2(-1,1),
+                    new Vector2(0,1),
+                    new Vector2(1,1)
+        };
+        foreach (Vector2 step in steps)
+        {
+            if ((x + step.x) > 0 && (x + step.x) < terrainData.heightmapWidth && //preventing out of bounds
+                (y + step.y) > 0 && (y + step.y) < terrainData.heightmapHeight)
+                returnValue.Add(new Vector2(x + step.x, y + step.y));
+        }
 
-    private void Smooth ()
+        return returnValue;
+    }
+
+    private float[,] Smooth (float[,] _target)
     {
         
-        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        //float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
         float[,] smoothHeightMap = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
         //steps to get all 8 neighboor pixels
         Vector2[] steps = {
@@ -531,19 +824,19 @@ public class ProceduralTerrain : MonoBehaviour
                 {
                     if( (x + step.x) > 0 && (x + step.x) < terrainData.heightmapWidth && //preventing out of bounds
                         (y + step.y) > 0 && (y + step.y) < terrainData.heightmapHeight)
-                        avgHeight += heightMap[(int)(x + step.x), (int)(y + step.y)];
+                        avgHeight += _target[(int)(x + step.x), (int)(y + step.y)];
                 }
                 avgHeight = avgHeight / steps.Length;
                 smoothHeightMap[x, y] = avgHeight;
             }
         }
-
-        terrainData.SetHeights(0,0, smoothHeightMap);
+        return _target;
+        //terrainData.SetHeights(0,0, smoothHeightMap);
     }
 
     private void GenerateVoronoi ()
     {
-        foreach (VoronoiParameters _target in VoronoiList)
+        foreach (VoronoiParameters _target in voronoiList)
         {
             CalculateVoronoi(_target);
         }
@@ -627,7 +920,7 @@ public class ProceduralTerrain : MonoBehaviour
         {
             for (int y = 0; y < terrainData.heightmapHeight; y++)
             {
-                foreach (PerlinNoiseParameters targetPerlin in PerlinList) {
+                foreach (PerlinNoiseParameters targetPerlin in perlinList) {
                     heightMap[x, y] += CalculatePerlinNoise(x, y, targetPerlin);
                 };
                 
@@ -658,11 +951,24 @@ public class ProceduralTerrain : MonoBehaviour
 
     }
 
+    public float[,] createEmptyHeight()
+    {
+        float[,] emptyHeight = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
+        for (int x = 0; x < terrainData.heightmapWidth; x++)
+        {
+            for (int y = 0; y < terrainData.heightmapWidth; y++)
+            {
+                emptyHeight[x, y] = 0f;
+            }
+        }
+        return emptyHeight;
+    }
+
     public void AddDebugValues() {
 
         int perlinOffset = (int) Random.Range(0f, 1200f);
 
-        PerlinList.Add(
+        perlinList.Add(
             new PerlinNoiseParameters("Mountains",
             0.005f,// _perlinXScale
             0.005f,
@@ -678,7 +984,7 @@ public class ProceduralTerrain : MonoBehaviour
             1f)
             );
 
-        PerlinList.Add(
+        perlinList.Add(
             new PerlinNoiseParameters("High Mountains", // _name
             0.005f, // _perlinXScale
             0.005f, // _perlinYScale
@@ -693,7 +999,7 @@ public class ProceduralTerrain : MonoBehaviour
             true, //normalize
             0.5f)
             );
-        PerlinList.Add(
+        perlinList.Add(
             new PerlinNoiseParameters("Plains Noise", // _name
             0.001f, // _perlinXScale
             0.001f, // _perlinYScale
@@ -708,7 +1014,7 @@ public class ProceduralTerrain : MonoBehaviour
             true, // _normalizeSize
             0.1f)
             );
-        PerlinList.Add(
+        perlinList.Add(
             new PerlinNoiseParameters("Plains Level", // _name
             0.001f, // _perlinXScale
             0.001f, // _perlinYScale
@@ -724,7 +1030,7 @@ public class ProceduralTerrain : MonoBehaviour
             0.4f)
             );
 
-        VoronoiList.Add(
+        voronoiList.Add(
             new VoronoiParameters(
                 "gentle slopes",
                 0f,
@@ -737,7 +1043,7 @@ public class ProceduralTerrain : MonoBehaviour
                 1.2f
                 )
             );
-        VoronoiList.Add(
+        voronoiList.Add(
             new VoronoiParameters(
                 "High Mountain",
                 0.2f,

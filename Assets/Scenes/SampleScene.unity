@@ -256,8 +256,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 534669902}
-  m_LocalRotation: {x: 0.09669262, y: 0.3579649, z: -0.037296135, w: 0.92796594}
-  m_LocalPosition: {x: 902.9471, y: 67.76629, z: 554.51624}
+  m_LocalRotation: {x: -0.24848007, y: 0.20197587, z: -0.05306114, w: -0.9458583}
+  m_LocalPosition: {x: 2319.9697, y: 417.15805, z: -113.99764}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -449,8 +449,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   terrain: {fileID: 903789863}
   terrainData: {fileID: 15600000, guid: 3acd888f8c96fda47b31aebd1df45619, type: 2}
-  waterLevel: -0.02
+  Seed: 42
+  waterLevel: -0.08
   waterGO: {fileID: 674426595}
+  erosionList:
+  - type: 3
+    erodeRepeat: 1
+    erosionStrength: 0.01
+    springsPerRiver: 5
+    solubility: 0.0001
+    droplets: 600
+    erosionSmoothAmount: 1
+    thermalDisplacementMultiplier: 0.005
+    dropletMinHeight: 0.3
+  - type: 0
+    erodeRepeat: 1
+    erosionStrength: 0.001
+    springsPerRiver: 5
+    solubility: 0.0001
+    droplets: 600
+    erosionSmoothAmount: 1
+    thermalDisplacementMultiplier: 0.005
+    dropletMinHeight: 0.01
+  - type: 1
+    erodeRepeat: 3
+    erosionStrength: 0.01
+    springsPerRiver: 5
+    solubility: 0.0001
+    droplets: 600
+    erosionSmoothAmount: 0
+    thermalDisplacementMultiplier: 0.005
+    dropletMinHeight: 0.3
   splatHeights:
   - texture: {fileID: 2800000, guid: 3a7915e2b99cd4d5a9f01b075f2ad6e9, type: 3}
     minHeight: 0
@@ -610,6 +639,87 @@ MonoBehaviour:
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     lightColor: {r: 1, g: 1, b: 1, a: 1}
+  perlinList:
+  - name: Plains Level
+    perlinXScale: 0.001
+    perlinYScale: 0.001
+    perlinOffsetX: 1198
+    perlinOffsetY: 1198
+    perlinOctaves: 10
+    perlinScaleModifier: 12
+    perlinPersistance: 1.1
+    heightReduction: 0
+    minimumClamp: 0
+    maximumClamp: 1
+    normalizeSize: 1
+    heightMultiplier: 0.4
+  - name: High Mountains
+    perlinXScale: 0.005
+    perlinYScale: 0.005
+    perlinOffsetX: 1198
+    perlinOffsetY: 1198
+    perlinOctaves: 16
+    perlinScaleModifier: 1
+    perlinPersistance: 0.4
+    heightReduction: 0.4
+    minimumClamp: 0
+    maximumClamp: 1
+    normalizeSize: 1
+    heightMultiplier: 1
+  - name: Plains Noise
+    perlinXScale: 0.005
+    perlinYScale: 0.005
+    perlinOffsetX: 1198
+    perlinOffsetY: 1198
+    perlinOctaves: 10
+    perlinScaleModifier: 0.8
+    perlinPersistance: 0.6
+    heightReduction: 0.45
+    minimumClamp: 0.01
+    maximumClamp: 1
+    normalizeSize: 1
+    heightMultiplier: 0.5
+  - name: Plains Level
+    perlinXScale: 0.001
+    perlinYScale: 0.001
+    perlinOffsetX: 1198
+    perlinOffsetY: 1198
+    perlinOctaves: 10
+    perlinScaleModifier: 0.8
+    perlinPersistance: 1.1
+    heightReduction: 0.1
+    minimumClamp: 0
+    maximumClamp: 1
+    normalizeSize: 1
+    heightMultiplier: 0.1
+  voronoiList:
+  - name: cornoi
+    minHeight: 0
+    maxHeight: 1
+    falloff: 1
+    maxDistanceMultiplier: 1
+    minInstances: 0
+    maxInstances: 1
+    powerFallout: 0
+    powerValue: 1
+  - name: gentle slopes
+    minHeight: 0
+    maxHeight: 0.1
+    falloff: 0.4
+    maxDistanceMultiplier: 1
+    minInstances: 0
+    maxInstances: 6
+    powerFallout: 1
+    powerValue: 1.2
+  - name: High Mountain
+    minHeight: 0.2
+    maxHeight: 0.45
+    falloff: 1
+    maxDistanceMultiplier: 0.32
+    minInstances: 0
+    maxInstances: 4
+    powerFallout: 1
+    powerValue: 0.89
 --- !u!1 &1857607657
 GameObject:
   m_ObjectHideFlags: 0
