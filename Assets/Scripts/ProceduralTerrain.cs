@@ -98,9 +98,10 @@ public class ProceduralTerrain : MonoBehaviour
         public int springsPerRiver = 5;
         public float solubility = 0.01f;
         public int droplets = 10;
-        public int erosionSmoothAmount = 2;
+        public int erosionSmoothAmount = 0;
         public float thermalDisplacementMultiplier = 0.01f;
         public float dropletMinHeight = 0.3f;
+        public Vector2 windDisplacement = new Vector2(5, 2);
     }
 
     public List<ErosionData> erosionList = new List<ErosionData>()
@@ -135,6 +136,7 @@ public class ProceduralTerrain : MonoBehaviour
         terrain = this.gameObject.GetComponent<Terrain>();
         terrainData = terrain.terrainData;
         float[,] heightMap = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
+        heightMap = createEmptyHeight(0.2f);
         terrainData.SetHeights(0, 0, heightMap);
 
         //PerlinList = new List<PerlinNoiseParameters>();
@@ -145,25 +147,25 @@ public class ProceduralTerrain : MonoBehaviour
             Seed = (int) Random.Range(0f, int.MaxValue);
         Random.InitState(Seed); //init state must come from the level seed
         Camera.main.backgroundColor = Color.white;
-        MidPointDisplacement();
-        GenerateVoronoi();
+        //MidPointDisplacement();
+        //GenerateVoronoi();
 
-        heightMap = Smooth(heightMap);
-        heightMap = Smooth(heightMap);
-        heightMap = Smooth(heightMap);
-        heightMap = Smooth(heightMap);
-        heightMap = Smooth(heightMap);
+        //heightMap = Smooth(heightMap);
+        //heightMap = Smooth(heightMap);
+        //heightMap = Smooth(heightMap);
+        //heightMap = Smooth(heightMap);
+        //heightMap = Smooth(heightMap);
 
         
-        GeneratePerlin();
+        //GeneratePerlin();
         foreach (ErosionData erodeTarget in erosionList)
         {
             Erode(erodeTarget);
         }
         
-        GenerateVegetation();
-        AddDetails();
-        AddWater();
+        //GenerateVegetation();
+        //AddDetails();
+        //AddWater();
         SplatMaps();
 
     }
@@ -393,7 +395,34 @@ public class ProceduralTerrain : MonoBehaviour
 
     void ErodeWind(ErosionData _target)
     {
+        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        int width = terrainData.heightmapWidth;
+        int height = terrainData.heightmapHeight;
 
+        for (int x = 0; x <= width; x += 1)
+        {
+            for(int y = 0; y <= height; y += (int) _target.windDisplacement.y)
+            {
+                float thisNoise = (float)Mathf.PerlinNoise(x * 0.1f, y * 0.1f) * 10;
+                int nx = (int) (x + _target.windDisplacement.x);
+                int ny = (int)(y + _target.windDisplacement.y/2 + thisNoise);
+                int nny = (int)(y + thisNoise);
+
+                if (!( (nx < 0) || (nx > (width -1)) || (ny < 0) || (ny > (height -1))) &&
+                    (x<=terrainData.heightmapWidth && nny < terrainData.heightmapHeight) )
+                {
+                    heightMap[x, nny] -= _target.erosionStrength;
+                    heightMap[nx, ny] += _target.erosionStrength;
+                }
+            }
+        }
+
+        for (int i = 0; i<= _target.erosionSmoothAmount; i++)
+        {
+            heightMap = Smooth(heightMap);
+        }
+
+        terrainData.SetHeights(0,0, heightMap);
     }
 
 
@@ -951,14 +980,14 @@ public class ProceduralTerrain : MonoBehaviour
 
     }
 
-    public float[,] createEmptyHeight()
+    public float[,] createEmptyHeight(float _defaultHeight = 0f)
     {
         float[,] emptyHeight = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
         for (int x = 0; x < terrainData.heightmapWidth; x++)
         {
             for (int y = 0; y < terrainData.heightmapWidth; y++)
             {
-                emptyHeight[x, y] = 0f;
+                emptyHeight[x, y] = _defaultHeight;
             }
         }
         return emptyHeight;
