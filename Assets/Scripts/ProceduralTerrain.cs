@@ -4,106 +4,12 @@ using UnityEngine;
 
 public class ProceduralTerrain : MonoBehaviour
 {
-
-    //public Vector2 heightRange = new Vector2(0.1f, 0.2f);
     public Terrain terrain;
     public TerrainData terrainData;
     public int Seed = 42;
     public float waterLevel = 0.05f;
     public GameObject waterGO = null;
-
-    [System.Serializable]
-    public class PlanetColors
-    {
-        public Color sky = Color.white;
-        public Color cloud = Color.white;
-        public Color ground = Color.white;
-        public Color grass = Color.white;
-        public Color rock = Color.white;
-        public Color snow = Color.white;
-        public Color trees = Color.white;
-    }
-
-    [System.Serializable]
-    public class SplatHeights
-    {
-        public Texture2D texture = null;
-        public float minHeight = 0.1f;
-        public float maxHeight = 0.2f;
-        public Vector2 tileOffset = new Vector2(0f,0f);
-        public Vector2 tileSize = new Vector2(50f, 50f);
-        public float minSteepness = 0.0f;
-        public float maxSteepness = 25f;
-        [Tooltip("Bright area color - most prominent")]
-        public Color color1 = Color.white;
-        [Tooltip("Dark area color - less prominent")]
-        public Color color2 = Color.white;
-        public Color redTint = Color.white;
-        public Color greenTint = Color.white;
-        public Color blueTint = Color.white;
-        public float colorThreshold = 0.5f;
-    }
-
-    [System.Serializable]
-    public class VegetationData
-    {
-        public GameObject mesh = null;
-        public float minHeight = 0.1f;
-        public float maxHeight = 0.2f;
-        public float minSteepness = 0.0f;
-        public float maxSteepness = 25f;
-        public float minScale = 0.95f;
-        public float maxScale = 1.05f;
-        public int maximumTrees = 5000;
-        public int treeSpacing = 5;
-        public float density = 0.5f;
-        public Color color1 = Color.white;
-        public Color color2 = Color.gray;
-        public Color lightColor = Color.white;
-    }
-
-    [System.Serializable]
-    public class DetailData
-    {
-        public GameObject prototype = null;
-        public Texture2D prototypeTexture = null;
-        public float minHeight = 0.1f;
-        public float maxHeight = 0.2f;
-        public float minSteepness = 0.0f;
-        public float maxSteepness = 25f;
-        public Vector2 heightScaleRange = new Vector2(0.9f, 1.1f);
-        public Vector2 widthScaleRange = new Vector2(0.9f, 1.1f);
-        public float density = 0.5f;
-        public float feather = 0.05f; //random applie to min and max height to create blending
-        public Color color1 = Color.white;
-        public Color color2 = Color.gray;
-        public Color lightColor = Color.white;
-    }
-
-    public enum ErosionType
-    {
-        Rain = 0,
-        Thermal = 1,
-        Tidal = 2,
-        River = 3,
-        Wind = 4
-    }
-
-    [System.Serializable]
-    public class ErosionData
-    {
-        public ErosionType type = ErosionType.Rain;
-        public int erodeRepeat = 1;
-        public float erosionStrength = 0.1f;
-        public int springsPerRiver = 5;
-        public float solubility = 0.01f;
-        public int droplets = 10;
-        public int erosionSmoothAmount = 0;
-        public float thermalDisplacementMultiplier = 0.01f;
-        public float dropletMinHeight = 0.3f;
-        public Vector2 windDisplacement = new Vector2(5, 2);
-    }
-
+    
     public List<ErosionData> erosionList = new List<ErosionData>()
     {
         new ErosionData()
@@ -149,13 +55,6 @@ public class ProceduralTerrain : MonoBehaviour
         Camera.main.backgroundColor = Color.white;
         //MidPointDisplacement();
         //GenerateVoronoi();
-
-        //heightMap = Smooth(heightMap);
-        //heightMap = Smooth(heightMap);
-        //heightMap = Smooth(heightMap);
-        //heightMap = Smooth(heightMap);
-        //heightMap = Smooth(heightMap);
-
         
         //GeneratePerlin();
         foreach (ErosionData erodeTarget in erosionList)
@@ -193,21 +92,13 @@ public class ProceduralTerrain : MonoBehaviour
                 case ErosionType.Wind:
                     ErodeWind(_target);
                     break;
+                case ErosionType.Canyon:
+                    ErodeCanyon(_target);
+                    break;
             }
         }
     }
 
-    enum mergeMethod {
-        Additive = 0,
-        Subtract = 1,
-        Replace = 3,
-        ReplaceLower = 4,
-        ReplaceHigher = 5,
-        AddOnLower = 6,
-        AddOnHigher = 7,
-        SubOnLower = 8,
-        SubOnHigher = 9
-    };
 
     void mergeHeightMap(float[,] _targetHeightMap, mergeMethod _merge)
     {
@@ -264,6 +155,94 @@ public class ProceduralTerrain : MonoBehaviour
 
         mergeHeightMap(rainHeightMap, mergeMethod.Additive);
     }
+
+    void ErodeCanyon (ErosionData _target)
+    {
+        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        float[,] canyonHeightmap = createEmptyHeight();
+        int mapHeight = terrainData.heightmapHeight;
+        int mapWidth = terrainData.heightmapWidth;
+        var pointsList = GetPoints(_target.CanyonStart, _target.CanyonEnd);
+        Vector2[] points = pointsList.ToArray();
+        for(int i = 0; i<points.Length; i++)
+        {
+            points[i].x += (int) (Random.Range(0f, _target.CanyonDisplacement) - _target.CanyonDisplacement / 2 );
+            points[i].y += (int) (Random.Range(0f, _target.CanyonDisplacement) - _target.CanyonDisplacement / 2);
+            if (points[i].y < mapHeight && points[i].y > 0 && points[i].x < mapWidth && points[i].x > 0)
+                canyonHeightmap[(int)points[i].x, (int)points[i].y] = _target.erosionStrength + Random.Range(0f, _target.solubility);
+
+            for (int nx =0; nx < _target.CanyonWidth; nx++)
+            {
+                for (int ny = 0; ny < _target.CanyonWidth; ny++)
+                {
+                    int nnx = (int) points[i].x + nx;
+                    int nny = (int)points[i].y + ny;
+                    if (nny < mapHeight && nny > 0 && nnx < mapWidth && nnx > 0)
+                    {
+                        canyonHeightmap[nnx, nny] = _target.erosionStrength + Random.Range(0f, _target.solubility);
+                    }
+                    nnx = (int)points[i].x - nx;
+                    nny = (int)points[i].y - ny;
+                    if (nny < mapHeight && nny > 0 && nnx < mapWidth && nnx > 0)
+                    {
+                        canyonHeightmap[nnx, nny] = _target.erosionStrength + Random.Range(0f, _target.solubility);
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < _target.erosionSmoothAmount; i++)
+        {
+            canyonHeightmap = Smooth(canyonHeightmap);
+        }
+        mergeHeightMap(canyonHeightmap, mergeMethod.Subtract);
+    }
+
+    public List<Vector2> GetPoints(Vector2 p1, Vector2 p2)
+    {
+        List<Vector2> points = new List<Vector2>();
+
+        // no slope (vertical line)
+        if (p1.x == p2.x)
+        {
+            for (double y = p1.y; y <= p2.y; y++)
+            {
+                Vector2 p = new Vector2(p1.x, (float) y);
+                points.Add(p);
+            }
+        }
+        else
+        {
+            // swap p1 and p2 if p2.x < p1.x
+            if (p2.x < p1.x)
+            {
+                Vector2 temp = p1;
+                p1 = p2;
+                p2 = temp;
+            }
+
+            double deltaX = p2.x - p1.x;
+            double deltaY = p2.y - p1.y;
+            double error = -1.0f;
+            double deltaErr = Mathf.Abs((float) deltaY / (float) deltaX);
+
+            double y = p1.y;
+            for (double x = p1.x; x <= p2.x; x++)
+            {
+                Vector2 p = new Vector2( (float) x, (float) y);
+                points.Add(p);
+                error += deltaErr;
+                while (error >= 0.0f)
+                {
+                    y++;
+                    points.Add(new Vector2( (float) x, (float) y));
+                    error -= 1.0f;
+                }
+            }
+        }
+
+        return points;
+    }
+
 
     void ErodeTidal(ErosionData _target) //removes beaches and replaces then with small cliffs
     {
@@ -403,7 +382,7 @@ public class ProceduralTerrain : MonoBehaviour
         {
             for(int y = 0; y <= height; y += (int) _target.windDisplacement.y)
             {
-                float thisNoise = (float)Mathf.PerlinNoise(x * 0.1f, y * 0.1f) * 10;
+                float thisNoise = (float)Mathf.PerlinNoise(x * 0.05f, y * 0.05f) * 4;
                 int nx = (int) (x + _target.windDisplacement.x);
                 int ny = (int)(y + _target.windDisplacement.y/2 + thisNoise);
                 int nny = (int)(y + thisNoise);
@@ -859,8 +838,7 @@ public class ProceduralTerrain : MonoBehaviour
                 smoothHeightMap[x, y] = avgHeight;
             }
         }
-        return _target;
-        //terrainData.SetHeights(0,0, smoothHeightMap);
+        return smoothHeightMap;
     }
 
     private void GenerateVoronoi ()
@@ -992,7 +970,7 @@ public class ProceduralTerrain : MonoBehaviour
         }
         return emptyHeight;
     }
-
+    
     public void AddDebugValues() {
 
         int perlinOffset = (int) Random.Range(0f, 1200f);
