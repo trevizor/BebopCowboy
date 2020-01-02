@@ -256,8 +256,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 534669902}
-  m_LocalRotation: {x: -0.24848007, y: 0.20197587, z: -0.05306114, w: -0.9458583}
-  m_LocalPosition: {x: 2319.9697, y: 417.15805, z: -113.99764}
+  m_LocalRotation: {x: -0.06400737, y: 0.8990076, z: -0.14041455, w: -0.40984404}
+  m_LocalPosition: {x: 2738.5188, y: 179.7909, z: 2705.8613}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -449,7 +449,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   terrain: {fileID: 903789863}
   terrainData: {fileID: 15600000, guid: 3acd888f8c96fda47b31aebd1df45619, type: 2}
-  Seed: 42
+  Seed: -1
+  terrainBaseHeight: 0.01
   waterLevel: -0.08
   waterGO: {fileID: 674426595}
   erosionList:
@@ -463,10 +464,10 @@ MonoBehaviour:
     thermalDisplacementMultiplier: 0.005
     dropletMinHeight: 0.3
     windDisplacement: {x: 5, y: 2}
-    CanyonStart: {x: 0, y: 0}
-    CanyonEnd: {x: 0, y: 0}
     CanyonWidth: 2
     CanyonDisplacement: 1.5
+    CanyonRandomDirection: 30
+    CanyonRandomCoverage: {x: 15, y: 40}
   - type: 0
     erodeRepeat: 1
     erosionStrength: 0.001
@@ -477,24 +478,38 @@ MonoBehaviour:
     thermalDisplacementMultiplier: 0.005
     dropletMinHeight: 0.01
     windDisplacement: {x: 5, y: 2}
-    CanyonStart: {x: 0, y: 0}
-    CanyonEnd: {x: 0, y: 0}
     CanyonWidth: 2
     CanyonDisplacement: 1.5
+    CanyonRandomDirection: 30
+    CanyonRandomCoverage: {x: 15, y: 40}
   - type: 5
     erodeRepeat: 1
-    erosionStrength: 0.02
+    erosionStrength: 0.08
     springsPerRiver: 5
-    solubility: 0.01
+    solubility: 0.03
+    droplets: 600
+    erosionSmoothAmount: 1
+    thermalDisplacementMultiplier: 0.005
+    dropletMinHeight: 0.3
+    windDisplacement: {x: 5, y: 2}
+    CanyonWidth: 7
+    CanyonDisplacement: 12
+    CanyonRandomDirection: 30
+    CanyonRandomCoverage: {x: 15, y: 40}
+  - type: 5
+    erodeRepeat: 1
+    erosionStrength: 0.06
+    springsPerRiver: 5
+    solubility: 0.001
     droplets: 600
     erosionSmoothAmount: 2
     thermalDisplacementMultiplier: 0.005
     dropletMinHeight: 0.3
     windDisplacement: {x: 5, y: 2}
-    CanyonStart: {x: 0, y: 0}
-    CanyonEnd: {x: 1024, y: 1024}
-    CanyonWidth: 3
-    CanyonDisplacement: 12
+    CanyonWidth: 6
+    CanyonDisplacement: 4
+    CanyonRandomDirection: 80
+    CanyonRandomCoverage: {x: 80, y: 100}
   splatHeights:
   - texture: {fileID: 2800000, guid: 3a7915e2b99cd4d5a9f01b075f2ad6e9, type: 3}
     minHeight: 0

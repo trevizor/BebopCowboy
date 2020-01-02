@@ -7,6 +7,7 @@ public class ProceduralTerrain : MonoBehaviour
     public Terrain terrain;
     public TerrainData terrainData;
     public int Seed = 42;
+    public float terrainBaseHeight = 0.2f;
     public float waterLevel = 0.05f;
     public GameObject waterGO = null;
     
@@ -42,7 +43,7 @@ public class ProceduralTerrain : MonoBehaviour
         terrain = this.gameObject.GetComponent<Terrain>();
         terrainData = terrain.terrainData;
         float[,] heightMap = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
-        heightMap = createEmptyHeight(0.2f);
+        heightMap = createEmptyHeight(terrainBaseHeight);
         terrainData.SetHeights(0, 0, heightMap);
 
         //PerlinList = new List<PerlinNoiseParameters>();
@@ -54,9 +55,9 @@ public class ProceduralTerrain : MonoBehaviour
         Random.InitState(Seed); //init state must come from the level seed
         Camera.main.backgroundColor = Color.white;
         //MidPointDisplacement();
-        //GenerateVoronoi();
+        GenerateVoronoi();
         
-        //GeneratePerlin();
+        GeneratePerlin();
         foreach (ErosionData erodeTarget in erosionList)
         {
             Erode(erodeTarget);
@@ -162,7 +163,23 @@ public class ProceduralTerrain : MonoBehaviour
         float[,] canyonHeightmap = createEmptyHeight();
         int mapHeight = terrainData.heightmapHeight;
         int mapWidth = terrainData.heightmapWidth;
-        var pointsList = GetPoints(_target.CanyonStart, _target.CanyonEnd);
+        List<Vector2> pointsList = new List<Vector2>();
+        Vector2Int CanyonStart = new Vector2Int(0, Random.Range(0, terrainData.heightmapHeight));
+        Vector2Int nexCanyonPoint = CanyonStart;
+        Vector2Int lastCanyonPoint = nexCanyonPoint;
+
+        while (nexCanyonPoint.x < terrainData.heightmapWidth && nexCanyonPoint.x >= 0 &&
+            nexCanyonPoint.y < terrainData.heightmapHeight && nexCanyonPoint.y >= 0)
+        {
+            lastCanyonPoint = nexCanyonPoint;
+            int randX = Random.Range(_target.CanyonRandomCoverage.x, _target.CanyonRandomCoverage.y) + nexCanyonPoint.x;
+            int randY = nexCanyonPoint.y + Random.Range(_target.CanyonRandomDirection*-1, _target.CanyonRandomDirection);
+            nexCanyonPoint = new Vector2Int(randX, randY);
+            pointsList.AddRange(GetV2Points(lastCanyonPoint, nexCanyonPoint) );
+            Debug.Log(randY);
+        }
+
+        //List<Vector2> pointsList = GetPoints(_target.CanyonStart, _target.CanyonEnd);
         Vector2[] points = pointsList.ToArray();
         for(int i = 0; i<points.Length; i++)
         {
@@ -195,6 +212,21 @@ public class ProceduralTerrain : MonoBehaviour
             canyonHeightmap = Smooth(canyonHeightmap);
         }
         mergeHeightMap(canyonHeightmap, mergeMethod.Subtract);
+    }
+
+    public List<Vector2> GetV2Points (Vector2 p1, Vector2 p2)
+    {
+        List<Vector2> points = new List<Vector2>();
+        float lerpValue = 0f;
+        float distance = 0.05f;
+        distance = 0.05f;
+        while (lerpValue <= 1f)
+        {
+            points.Add(Vector2.Lerp(p1, p2, lerpValue));
+            lerpValue += distance;
+        }
+
+        return points;
     }
 
     public List<Vector2> GetPoints(Vector2 p1, Vector2 p2)

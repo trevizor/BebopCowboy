@@ -106,10 +106,10 @@ public class ErosionData
     public float thermalDisplacementMultiplier = 0.01f;
     public float dropletMinHeight = 0.3f;
     public Vector2Int windDisplacement = new Vector2Int(5, 2);
-    public Vector2Int CanyonStart = new Vector2Int(0, 0);
-    public Vector2Int CanyonEnd = new Vector2Int(0, 0);
     public float CanyonWidth = 2f;
     public float CanyonDisplacement = 1.5f;
+    public int CanyonRandomDirection = 30;
+    public Vector2Int CanyonRandomCoverage = new Vector2Int(15, 40);
 }
 
 public class DataTypes
