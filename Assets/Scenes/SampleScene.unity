@@ -466,7 +466,6 @@ MonoBehaviour:
     CanyonStart: {x: 0, y: 0}
     CanyonEnd: {x: 0, y: 0}
     CanyonWidth: 2
-    CanyonDepth: 0.2
     CanyonDisplacement: 1.5
   - type: 0
     erodeRepeat: 1
@@ -481,23 +480,21 @@ MonoBehaviour:
     CanyonStart: {x: 0, y: 0}
     CanyonEnd: {x: 0, y: 0}
     CanyonWidth: 2
-    CanyonDepth: 0.2
     CanyonDisplacement: 1.5
   - type: 5
     erodeRepeat: 1
-    erosionStrength: 0.01
+    erosionStrength: 0.02
     springsPerRiver: 5
-    solubility: 0.001
+    solubility: 0.01
     droplets: 600
-    erosionSmoothAmount: 20
+    erosionSmoothAmount: 2
     thermalDisplacementMultiplier: 0.005
     dropletMinHeight: 0.3
     windDisplacement: {x: 5, y: 2}
     CanyonStart: {x: 0, y: 0}
     CanyonEnd: {x: 1024, y: 1024}
-    CanyonWidth: 6
-    CanyonDepth: 0.2
-    CanyonDisplacement: 5
+    CanyonWidth: 3
+    CanyonDisplacement: 12
   splatHeights:
   - texture: {fileID: 2800000, guid: 3a7915e2b99cd4d5a9f01b075f2ad6e9, type: 3}
     minHeight: 0
