@@ -63,10 +63,20 @@ public class ProceduralTerrain : MonoBehaviour
             Erode(erodeTarget);
         }
         
-        //GenerateVegetation();
-        //AddDetails();
-        //AddWater();
+        GenerateVegetation();
+        AddDetails();
+        AddWater();
         SplatMaps();
+
+
+        //then sets the fog and sky
+        RenderSettings.fog = true;
+        RenderSettings.fogMode = FogMode.Linear;
+        RenderSettings.fogColor = new Color(107/255f, 172/255f, 255/255f, 1f);
+        RenderSettings.fogStartDistance = 100;
+        RenderSettings.fogEndDistance = 2500;
+        Camera.main.clearFlags = CameraClearFlags.SolidColor;
+        Camera.main.backgroundColor = new Color(107 / 255f, 172 / 255f, 255 / 255f, 1f);
 
     }
 
@@ -101,7 +111,7 @@ public class ProceduralTerrain : MonoBehaviour
     }
 
 
-    void mergeHeightMap(float[,] _targetHeightMap, mergeMethod _merge)
+    void mergeHeightMap(float[,] _targetHeightMap, mergeMethod _merge, float minHeightMerge = 0f)
     {
         float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
         switch (_merge)
@@ -124,12 +134,59 @@ public class ProceduralTerrain : MonoBehaviour
                     }
                 }
                 break;
+            case mergeMethod.ReplaceLower:
+                for (int j = 0; j < terrainData.heightmapWidth; j++)
+                {
+                    for (int k = 0; k < terrainData.heightmapHeight; k++)
+                    {
+                        if(heightMap[j, k] < _targetHeightMap[j, k])
+                            heightMap[j, k] = _targetHeightMap[j, k];
+                    }
+                }
+                break;
+            case mergeMethod.ReplaceHigher:
+                for (int j = 0; j < terrainData.heightmapWidth; j++)
+                {
+                    for (int k = 0; k < terrainData.heightmapHeight; k++)
+                    {
+                        if (heightMap[j, k] > _targetHeightMap[j, k])
+                            heightMap[j, k] = _targetHeightMap[j, k];
+                    }
+                }
+                break;
             case mergeMethod.Subtract:
                 for (int j = 0; j < terrainData.heightmapWidth; j++)
                 {
                     for (int k = 0; k < terrainData.heightmapHeight; k++)
                     {
                         heightMap[j, k] -= _targetHeightMap[j, k];
+                    }
+                }
+                break;
+            case mergeMethod.SubOnThresold:
+                for (int j = 0; j < terrainData.heightmapWidth; j++)
+                {
+                    for (int k = 0; k < terrainData.heightmapHeight; k++)
+                    {
+                        if(heightMap[j, k] < minHeightMerge)
+                        {
+                            //smoothes the difference the closer it is to the thresold
+                            heightMap[j, k] -= (_targetHeightMap[j, k] * (minHeightMerge - heightMap[j, k]) / minHeightMerge);
+                        }
+                            
+                    }
+                }
+                break;
+            case mergeMethod.AddOnThresold:
+                for (int j = 0; j < terrainData.heightmapWidth; j++)
+                {
+                    for (int k = 0; k < terrainData.heightmapHeight; k++)
+                    {
+                        if (heightMap[j, k] < minHeightMerge)
+                        {
+                            heightMap[j, k] += (_targetHeightMap[j, k] * (minHeightMerge - heightMap[j, k]) / minHeightMerge);
+                        }
+
                     }
                 }
                 break;
@@ -176,7 +233,6 @@ public class ProceduralTerrain : MonoBehaviour
             int randY = nexCanyonPoint.y + Random.Range(_target.CanyonRandomDirection*-1, _target.CanyonRandomDirection);
             nexCanyonPoint = new Vector2Int(randX, randY);
             pointsList.AddRange(GetV2Points(lastCanyonPoint, nexCanyonPoint) );
-            Debug.Log(randY);
         }
 
         //List<Vector2> pointsList = GetPoints(_target.CanyonStart, _target.CanyonEnd);
@@ -194,13 +250,13 @@ public class ProceduralTerrain : MonoBehaviour
                 {
                     int nnx = (int) points[i].x + nx;
                     int nny = (int)points[i].y + ny;
-                    if (nny < mapHeight && nny > 0 && nnx < mapWidth && nnx > 0)
+                    if (nny < mapHeight && nny > 0 && nnx < mapWidth && nnx > 0 && ( Vector2.Distance(new Vector2(points[i].x, points[i].y), new Vector2(nnx, nny)) < _target.CanyonWidth) )
                     {
                         canyonHeightmap[nnx, nny] = _target.erosionStrength + Random.Range(0f, _target.solubility);
                     }
                     nnx = (int)points[i].x - nx;
                     nny = (int)points[i].y - ny;
-                    if (nny < mapHeight && nny > 0 && nnx < mapWidth && nnx > 0)
+                    if (nny < mapHeight && nny > 0 && nnx < mapWidth && nnx > 0 && (Vector2.Distance(new Vector2(points[i].x, points[i].y), new Vector2(nnx, nny)) < _target.CanyonWidth))
                     {
                         canyonHeightmap[nnx, nny] = _target.erosionStrength + Random.Range(0f, _target.solubility);
                     }
@@ -211,15 +267,14 @@ public class ProceduralTerrain : MonoBehaviour
         {
             canyonHeightmap = Smooth(canyonHeightmap);
         }
-        mergeHeightMap(canyonHeightmap, mergeMethod.Subtract);
+        mergeHeightMap(canyonHeightmap, mergeMethod.SubOnThresold, _target.minHeightMerge);
     }
 
     public List<Vector2> GetV2Points (Vector2 p1, Vector2 p2)
     {
         List<Vector2> points = new List<Vector2>();
         float lerpValue = 0f;
-        float distance = 0.05f;
-        distance = 0.05f;
+        float distance = 0.01f;
         while (lerpValue <= 1f)
         {
             points.Add(Vector2.Lerp(p1, p2, lerpValue));

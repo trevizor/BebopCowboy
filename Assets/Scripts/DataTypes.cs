@@ -89,8 +89,10 @@ enum mergeMethod
     ReplaceHigher = 5,
     AddOnLower = 6,
     AddOnHigher = 7,
-    SubOnLower = 8,
-    SubOnHigher = 9
+    AddOnThresold = 8,
+    SubOnLower = 9,
+    SubOnHigher = 10,
+    SubOnThresold = 11
 };
 
 [System.Serializable]
@@ -110,6 +112,7 @@ public class ErosionData
     public float CanyonDisplacement = 1.5f;
     public int CanyonRandomDirection = 30;
     public Vector2Int CanyonRandomCoverage = new Vector2Int(15, 40);
+    public float minHeightMerge = 0.3f;
 }
 
 public class DataTypes
