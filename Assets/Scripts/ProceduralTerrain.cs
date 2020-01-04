@@ -46,9 +46,6 @@ public class ProceduralTerrain : MonoBehaviour
         heightMap = createEmptyHeight(terrainBaseHeight);
         terrainData.SetHeights(0, 0, heightMap);
 
-        //PerlinList = new List<PerlinNoiseParameters>();
-        //VoronoiList = new List<VoronoiParameters>();
-        //VoronoiList = new List<VoronoiParameters>();
         //maybe we can get some way to generate noise only on the voronoi surface? create a temp heightmap and apply some perlin only to it.
         if (Seed == 0)
             Seed = (int) Random.Range(0f, int.MaxValue);
@@ -57,7 +54,7 @@ public class ProceduralTerrain : MonoBehaviour
         //MidPointDisplacement();
         GenerateVoronoi();
         
-        GeneratePerlin();
+        //GeneratePerlin();
         foreach (ErosionData erodeTarget in erosionList)
         {
             Erode(erodeTarget);
@@ -70,13 +67,32 @@ public class ProceduralTerrain : MonoBehaviour
 
 
         //then sets the fog and sky
+        bool SkyColorAffectsLight = true;
+        Color skyColor = new Color(107 / 255f, 172 / 255f, 255 / 255f, 1f); //azulzin
+        //Color skyColor = new Color(255 / 255f, 191 / 138, 255 / 255f, 1f); //laranjinha
+        //Color skyColor = new Color(255 / 255f, 200 / 255f, 200 / 255f, 1f); //vermelho do malzao
+        //Color skyColor = new Color(238 / 255f, 189 / 255f, 255 / 255f, 1f); //roxo
+        //Color skyColor = Color.white;
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.Linear;
-        RenderSettings.fogColor = new Color(107/255f, 172/255f, 255/255f, 1f);
+        RenderSettings.fogColor = skyColor;
         RenderSettings.fogStartDistance = 100;
-        RenderSettings.fogEndDistance = 2500;
+        RenderSettings.fogEndDistance = 2000;
         Camera.main.clearFlags = CameraClearFlags.SolidColor;
-        Camera.main.backgroundColor = new Color(107 / 255f, 172 / 255f, 255 / 255f, 1f);
+        Camera.main.backgroundColor = skyColor;
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+        if (SkyColorAffectsLight)
+        {
+            RenderSettings.ambientSkyColor = skyColor;
+            RenderSettings.ambientEquatorColor = (skyColor + Color.white) / 2;
+            RenderSettings.ambientGroundColor = (skyColor + Color.black + Color.black) / 3;
+        } else
+        {
+            RenderSettings.ambientSkyColor = Color.white;
+            RenderSettings.ambientEquatorColor = Color.white;
+            RenderSettings.ambientGroundColor = (Color.white + Color.black + Color.black) / 3;
+        }
+            
 
     }
 
@@ -204,14 +220,14 @@ public class ProceduralTerrain : MonoBehaviour
             int x = Random.Range(0, terrainData.heightmapWidth);
             int y = Random.Range(0, terrainData.heightmapHeight);
             if(heightMap[(int)x, (int)y] > _target.dropletMinHeight)
-                rainHeightMap[x, y] = -_target.erosionStrength;
+                rainHeightMap[x, y] = _target.erosionStrength;
         }
         for (int smoothAmount = 0; smoothAmount < _target.erosionSmoothAmount; smoothAmount++)
         {
             rainHeightMap = Smooth(rainHeightMap);
         }
 
-        mergeHeightMap(rainHeightMap, mergeMethod.Additive);
+        mergeHeightMap(rainHeightMap, mergeMethod.Subtract);
     }
 
     void ErodeCanyon (ErosionData _target)
@@ -235,7 +251,6 @@ public class ProceduralTerrain : MonoBehaviour
             pointsList.AddRange(GetV2Points(lastCanyonPoint, nexCanyonPoint) );
         }
 
-        //List<Vector2> pointsList = GetPoints(_target.CanyonStart, _target.CanyonEnd);
         Vector2[] points = pointsList.ToArray();
         for(int i = 0; i<points.Length; i++)
         {
@@ -939,7 +954,8 @@ public class ProceduralTerrain : MonoBehaviour
 
     private void CalculateVoronoi (VoronoiParameters _target)
     {
-        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        //float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
+        float[,] heightMap = createEmptyHeight();
         Vector3 peak;
         Vector2 peakLocation;
         float distanceToPeak;
@@ -981,9 +997,13 @@ public class ProceduralTerrain : MonoBehaviour
                 }
             }
         }
-        
-
-        terrainData.SetHeights(0,0, heightMap);
+        if (_target.subtract)
+        {
+            mergeHeightMap(heightMap, mergeMethod.Subtract);
+        } else
+        {
+            mergeHeightMap(heightMap, mergeMethod.Additive);
+        }
     }
 
     private float CalculatePerlinNoise (int x, int y, PerlinNoiseParameters _target)

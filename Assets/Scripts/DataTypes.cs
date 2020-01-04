@@ -115,9 +115,95 @@ public class ErosionData
     public float minHeightMerge = 0.3f;
 }
 
-public class DataTypes
-{
 
+[System.Serializable]
+public class PerlinNoiseParameters
+{
+    public string name = "Perlin";
+    public float perlinXScale = 0.005f; //wave scale
+    public float perlinYScale = 0.005f;
+    public int perlinOffsetX = 50; //wave offset
+    public int perlinOffsetY = 50;
+    public int perlinOctaves = 16; //number of passes 
+    public float perlinScaleModifier = 1f; //scale per octave
+    public float perlinPersistance = 0.4f; //persistance per octave
+    public float heightReduction = 0.0f; //reduces the original value
+    public float minimumClamp = 0.0f; //clamps the value after height reduction
+    public float maximumClamp = 1.0f;
+    public bool normalizeSize = false; //normalizes based on the height reduction
+    public float heightMultiplier = 1f; //height multiplier
+
+    public PerlinNoiseParameters(
+        string _name = "Perlin",
+        float _perlinXScale = 0.005f,
+        float _perlinYScale = 0.005f,
+        int _perlinOffsetX = 50,
+        int _perlinOffsetY = 50,
+        int _perlinOctaves = 16,
+        float _perlinScaleModifier = 1f,
+        float _perlinPersistance = 0.4f,
+        float _heightReduction = 0f,
+        float _minimumClamp = 0.0f,
+        float _maximumClamp = 1.0f,
+        bool _normalizeSize = false,
+        float _heightMultiplier = 1f
+        )
+    {
+        _name = name;
+        perlinXScale = _perlinXScale;
+        perlinYScale = _perlinYScale;
+        perlinOffsetX = _perlinOffsetX;
+        perlinOffsetY = _perlinOffsetY;
+        perlinOctaves = _perlinOctaves;
+        perlinScaleModifier = _perlinScaleModifier;
+        perlinPersistance = _perlinPersistance;
+        heightReduction = _heightReduction;
+        minimumClamp = _minimumClamp;
+        maximumClamp = _maximumClamp;
+        normalizeSize = _normalizeSize;
+        heightMultiplier = _heightMultiplier;
+    }
+}
+
+
+[System.Serializable]
+public class VoronoiParameters
+{
+    public string name = "coronoi";
+    public float minHeight = 0f;
+    public float maxHeight = 1f;
+    public float falloff = 1f; //smaller numbers make the slope gentler, higher make it steeper
+    public float maxDistanceMultiplier = 1f; //needs more testing to check what exactly changes
+    public int minInstances = 0;
+    public int maxInstances = 3;
+    public bool powerFallout = false;
+    public float powerValue = 1f;
+    public bool subtract = false;
+
+
+    public VoronoiParameters(
+        string _name = "cornoi",
+        float _minHeight = 0f,
+        float _maxHeight = 1f,
+        float _falloff = 1f,
+        float _maxDistanceMultiplier = 1f,
+        int _minInst = 0,
+        int _maxInst = 1,
+        bool _powerFallout = false,
+        float _powerValue = 1f
+        )
+    {
+        name = _name;
+        minHeight = _minHeight;
+        maxHeight = _maxHeight;
+        falloff = _falloff;
+        maxDistanceMultiplier = _maxDistanceMultiplier;
+        minInstances = _minInst;
+        maxInstances = _maxInst;
+        powerFallout = _powerFallout;
+        powerValue = _powerValue;
+    }
 
 
 }
+

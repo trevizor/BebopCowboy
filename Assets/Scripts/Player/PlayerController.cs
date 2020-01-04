@@ -23,9 +23,9 @@ public class PlayerController : MonoBehaviour
         RaycastHit hit;
         int terrainLayer = LayerMask.GetMask("Terrain");
         int layerMask = 1 << terrainLayer;
-        if (Physics.Raycast(gameObject.transform.position, -Vector3.up, out hit, 1000, Physics.DefaultRaycastLayers))
+        if (Physics.Raycast(gameObject.transform.position, -Vector3.up, out hit, 2000, Physics.DefaultRaycastLayers))
         {
-            gameObject.transform.position = new Vector3(gameObject.transform.position.x, (hit.point.y + 2f), gameObject.transform.position.z);
+            gameObject.transform.position = new Vector3(gameObject.transform.position.x, (hit.point.y + 4f), gameObject.transform.position.z);
         }
 
         gameObject.AddComponent<Rigidbody>();
@@ -51,11 +51,22 @@ public class PlayerController : MonoBehaviour
     {
         float tempWalkSpeed = walkSpeed;
         if (Input.GetKey("q"))
-            tempWalkSpeed = walkSpeed * 3;
+            tempWalkSpeed = walkSpeed * 10;
         if(Input.GetKey("w"))
             body.velocity = new Vector3 ( camera.transform.forward.x * tempWalkSpeed, body.velocity.y, camera.transform.forward.z * tempWalkSpeed);
         if (Input.GetKey("e"))
-            body.velocity = new Vector3(body.velocity.x, 10f, body.velocity.z);
+            body.velocity = new Vector3(body.velocity.x, 20f, body.velocity.z);
+        if (Input.GetKey("r"))
+        {
+            RenderSettings.fogStartDistance += 5;
+            RenderSettings.fogEndDistance += 10;
+        }
+        if (Input.GetKey("t"))
+        {
+            RenderSettings.fogStartDistance -= 5;
+            RenderSettings.fogEndDistance -= 10;
+        }
+
     }
 
     void updateCamera()

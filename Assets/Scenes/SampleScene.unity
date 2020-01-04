@@ -14,7 +14,7 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
-  m_Fog: 1
+  m_Fog: 0
   m_FogColor: {r: 0.4198113, g: 0.6764331, b: 1, a: 1}
   m_FogMode: 1
   m_FogDensity: 0.03
@@ -139,19 +139,19 @@ Light:
   m_Enabled: 1
   serializedVersion: 8
   m_Type: 1
-  m_Color: {r: 1, g: 0.93292683, b: 0.75, a: 1}
-  m_Intensity: 0.25
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 1
-    m_Resolution: 1
+    m_Type: 2
+    m_Resolution: 2
     m_CustomResolution: -1
-    m_Strength: 0.695
+    m_Strength: 1
     m_Bias: 0.16
     m_NormalBias: 0.4
-    m_NearPlane: 0.2
+    m_NearPlane: 0.1
   m_Cookie: {fileID: 0}
   m_DrawHalo: 0
   m_Flare: {fileID: 0}
@@ -162,7 +162,7 @@ Light:
   m_Lightmapping: 4
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 1
+  m_BounceIntensity: 0
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
   m_ShadowRadius: 0
@@ -450,8 +450,8 @@ MonoBehaviour:
   terrain: {fileID: 903789863}
   terrainData: {fileID: 15600000, guid: 3acd888f8c96fda47b31aebd1df45619, type: 2}
   Seed: 0
-  terrainBaseHeight: 0.01
-  waterLevel: -0.08
+  terrainBaseHeight: 0.2
+  waterLevel: 0.01
   waterGO: {fileID: 674426595}
   erosionList:
   - type: 3
@@ -459,7 +459,7 @@ MonoBehaviour:
     erosionStrength: 0.01
     springsPerRiver: 5
     solubility: 0.0001
-    droplets: 600
+    droplets: 1200
     erosionSmoothAmount: 1
     thermalDisplacementMultiplier: 0.005
     dropletMinHeight: 0.3
@@ -519,7 +519,7 @@ MonoBehaviour:
     minHeight: 0
     maxHeight: 0.021
     tileOffset: {x: 0, y: 0}
-    tileSize: {x: 5, y: 5}
+    tileSize: {x: 50, y: 50}
     minSteepness: 0
     maxSteepness: 37
     color1: {r: 1, g: 1, b: 1, a: 1}
@@ -532,7 +532,7 @@ MonoBehaviour:
     minHeight: 0.02
     maxHeight: 0.1
     tileOffset: {x: 0, y: 0}
-    tileSize: {x: 10, y: 10}
+    tileSize: {x: 50, y: 50}
     minSteepness: 0
     maxSteepness: 37
     color1: {r: 1, g: 1, b: 1, a: 1}
@@ -558,7 +558,7 @@ MonoBehaviour:
     minHeight: 0.1
     maxHeight: 0.16
     tileOffset: {x: 0, y: 0}
-    tileSize: {x: 10, y: 10}
+    tileSize: {x: 50, y: 50}
     minSteepness: 0
     maxSteepness: 37
     color1: {r: 1, g: 1, b: 1, a: 1}
@@ -571,7 +571,7 @@ MonoBehaviour:
     minHeight: 0.15
     maxHeight: 1
     tileOffset: {x: 0, y: 0}
-    tileSize: {x: 100, y: 100}
+    tileSize: {x: 50, y: 50}
     minSteepness: 0
     maxSteepness: 40
     color1: {r: 1, g: 1, b: 1, a: 1}
@@ -584,7 +584,7 @@ MonoBehaviour:
     minHeight: 0
     maxHeight: 1
     tileOffset: {x: 0, y: 0}
-    tileSize: {x: 10, y: 10}
+    tileSize: {x: 50, y: 50}
     minSteepness: 36
     maxSteepness: 90
     color1: {r: 1, g: 1, b: 1, a: 1}
@@ -728,14 +728,15 @@ MonoBehaviour:
     heightMultiplier: 0.1
   voronoiList:
   - name: cornoi
-    minHeight: 0
-    maxHeight: 1
-    falloff: 1
-    maxDistanceMultiplier: 1
-    minInstances: 0
-    maxInstances: 1
-    powerFallout: 0
+    minHeight: 0.05
+    maxHeight: 0.2
+    falloff: 0.3
+    maxDistanceMultiplier: 0.8
+    minInstances: 1
+    maxInstances: 2
+    powerFallout: 1
     powerValue: 1
+    subtract: 1
   - name: gentle slopes
     minHeight: 0
     maxHeight: 0.1
@@ -745,6 +746,7 @@ MonoBehaviour:
     maxInstances: 6
     powerFallout: 1
     powerValue: 1.2
+    subtract: 0
   - name: High Mountain
     minHeight: 0.2
     maxHeight: 0.45
@@ -754,6 +756,7 @@ MonoBehaviour:
     maxInstances: 4
     powerFallout: 1
     powerValue: 0.89
+    subtract: 0
 --- !u!1 &1857607657
 GameObject:
   m_ObjectHideFlags: 0
@@ -840,7 +843,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1857607657}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1944, y: 112.27, z: 2148}
+  m_LocalPosition: {x: 1835, y: 504.6, z: 1844}
   m_LocalScale: {x: 0.71399, y: 1.8, z: 0.74584}
   m_Children:
   - {fileID: 534669905}
