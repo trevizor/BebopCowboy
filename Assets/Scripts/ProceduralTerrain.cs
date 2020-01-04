@@ -53,13 +53,26 @@ public class ProceduralTerrain : MonoBehaviour
         Camera.main.backgroundColor = Color.white;
         //MidPointDisplacement();
         GenerateVoronoi();
+        heightMap = GeneratePerlin();
+
         
-        GeneratePerlin();
+        for (int i = 0; i <= 1; i++)
+        {
+            heightMap = Smooth(heightMap);
+        }
+
+        terrainData.SetHeights(0, 0, heightMap);
+
         foreach (ErosionData erodeTarget in erosionList)
         {
             Erode(erodeTarget);
         }
+
+
+
         
+        
+
         GenerateVegetation();
         AddDetails();
         AddWater();
@@ -224,7 +237,7 @@ public class ProceduralTerrain : MonoBehaviour
         }
         for (int smoothAmount = 0; smoothAmount < _target.erosionSmoothAmount; smoothAmount++)
         {
-            rainHeightMap = Smooth(rainHeightMap);
+            rainHeightMap = Smooth(rainHeightMap, 2);
         }
 
         mergeHeightMap(rainHeightMap, mergeMethod.Subtract);
@@ -280,7 +293,7 @@ public class ProceduralTerrain : MonoBehaviour
         }
         for (int i = 0; i < _target.erosionSmoothAmount; i++)
         {
-            canyonHeightmap = Smooth(canyonHeightmap);
+            canyonHeightmap = Smooth(canyonHeightmap, 3);
         }
         mergeHeightMap(canyonHeightmap, mergeMethod.SubOnThresold, _target.minHeightMerge);
     }
@@ -368,7 +381,7 @@ public class ProceduralTerrain : MonoBehaviour
 
         for (int i = 0; i < _target.erosionSmoothAmount; i++)
         {
-            erodedHeightMap = Smooth(erodedHeightMap);
+            erodedHeightMap = Smooth(erodedHeightMap, 1);
         }
 
 
@@ -396,7 +409,7 @@ public class ProceduralTerrain : MonoBehaviour
 
         for (int i = 0; i < _target.erosionSmoothAmount; i++)
         {
-            erodedHeightMap = Smooth(erodedHeightMap);
+            erodedHeightMap = Smooth(erodedHeightMap, 2);
         }
             
 
@@ -565,7 +578,8 @@ public class ProceduralTerrain : MonoBehaviour
             {
                 for (int x = 0; x < terrainData.detailWidth; x += detailSpacing)
                 {
-                    if (Random.Range(0f, 1f) > detailList[i].density) continue;
+                    if (Random.Range(0f, 1f) >= detailList[i].density) continue;
+                    if (CalculatePerlinNoise(x, y, detailList[i].perlinDist) <= detailList[i].perlinCutout) continue;
                     int xHM = (int)(x / (float)terrainData.detailResolution * terrainData.heightmapWidth);
                     int yHM = (int)(y / (float)terrainData.detailResolution * terrainData.heightmapHeight);
 
@@ -892,23 +906,42 @@ public class ProceduralTerrain : MonoBehaviour
         return returnValue;
     }
 
-    private float[,] Smooth (float[,] _target)
+    private float[,] Smooth (float[,] _target, int _amount = 1)
     {
         
         //float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth, terrainData.heightmapHeight);
         float[,] smoothHeightMap = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
         //steps to get all 8 neighboor pixels
-        Vector2[] steps = {
+        Vector2[] steps = { };
+        Vector2[] weakSteps = {
+                    //new Vector2(0, -1),
+                    //new Vector2(-1, 0),
+                    new Vector2(0, 0),
+                    new Vector2(1, 0),
+                    new Vector2(0, 1)
+                };
+        Vector2[] normalSteps = {
                     new Vector2(-1,-1),
-                    new Vector2(0,-1),
+                    new Vector2(0, -1),
                     new Vector2(1,-1),
-                    new Vector2(-1,0),
-                    new Vector2(0,0),
-                    new Vector2(1,0),
+                    new Vector2(-1, 0),
+                    new Vector2(0, 0),
+                    new Vector2(1, 0),
                     new Vector2(-1,1),
-                    new Vector2(0,1),
+                    new Vector2(0, 1),
                     new Vector2(1,1)
-                    /*new Vector2(-1,-2),
+                };
+        Vector2[] strongSteps = {
+                    new Vector2(-1, -1),
+                    new Vector2(0, -1),
+                    new Vector2(1, -1),
+                    new Vector2(-1, 0),
+                    new Vector2(0, 0),
+                    new Vector2(1, 0),
+                    new Vector2(-1, 1),
+                    new Vector2(0, 1),
+                    new Vector2(1, 1),
+                    new Vector2(-1,-2),
                     new Vector2(0,-2),
                     new Vector2(1,-2),
                     new Vector2(-1,2),
@@ -923,8 +956,23 @@ public class ProceduralTerrain : MonoBehaviour
                     new Vector2(2,0),
                     new Vector2(2,1),
                     new Vector2(2,-2),
-                    new Vector2(2,2)*/
+                    new Vector2(2,2)
                 };
+        switch (_amount)
+        {
+            case 1:
+                steps = weakSteps;
+                break;
+            case 2:
+                steps = normalSteps;
+                break;
+            case 3:
+                steps = strongSteps;
+                break;
+                    
+        };
+            
+         
         float avgHeight = 0f;
 
         for (int x = 0; x < terrainData.heightmapWidth; x++)
@@ -1026,7 +1074,7 @@ public class ProceduralTerrain : MonoBehaviour
         return result;
     }
 
-    private void GeneratePerlin()
+    private float[,] GeneratePerlin()
     {
         float[,] heightMap;
         heightMap = terrainData.GetHeights(0,0, terrainData.heightmapWidth, terrainData.heightmapHeight);
@@ -1042,7 +1090,7 @@ public class ProceduralTerrain : MonoBehaviour
             }
 
         }
-        terrainData.SetHeights(0, 0, heightMap);
+        return heightMap;
     }
 
 

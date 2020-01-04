@@ -70,6 +70,8 @@ public class DetailData
     public Color color1 = Color.white;
     public Color color2 = Color.gray;
     public Color lightColor = Color.white;
+    public float perlinCutout = 0.5f;
+    public PerlinNoiseParameters perlinDist = new PerlinNoiseParameters();
 }
 
 public enum ErosionType
