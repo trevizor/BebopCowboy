@@ -629,8 +629,8 @@ public class ProceduralTerrain : MonoBehaviour
                 for (int tp = 0; tp < terrainData.treePrototypes.Length; tp++)
                 {
                     VegetationData currentVeg = vegetationList[tp];
-                    if (Random.Range(0.0f, 1f) > currentVeg.density) break;
-                    if (CalculatePerlinNoise(z, x, currentVeg.perlinDist) >= currentVeg.perlinCutout) break;
+                    if (Random.Range(0.0f, 1f) > currentVeg.density) continue;
+                    if (CalculatePerlinNoise(z, x, currentVeg.perlinDist) <= currentVeg.perlinCutout) continue;
                     float minHeight = currentVeg.minHeight;
                     float maxHeight = currentVeg.maxHeight;
                     float minSteepness = currentVeg.minSteepness;

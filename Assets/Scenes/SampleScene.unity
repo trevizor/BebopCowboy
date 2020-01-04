@@ -449,8 +449,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   terrain: {fileID: 903789863}
   terrainData: {fileID: 15600000, guid: 3acd888f8c96fda47b31aebd1df45619, type: 2}
-  Seed: 4
-  terrainBaseHeight: 0.05
+  Seed: 0
+  terrainBaseHeight: 0.025
   waterLevel: -0.001
   waterGO: {fileID: 674426595}
   erosionList:
@@ -595,7 +595,7 @@ MonoBehaviour:
     colorThreshold: 0.5
   vegetationList:
   - mesh: {fileID: 100000, guid: 43202a31bd1113061100b7a844295342, type: 3}
-    minHeight: 0.1
+    minHeight: 0.15
     maxHeight: 0.95
     minSteepness: 0
     maxSteepness: 20
@@ -603,11 +603,11 @@ MonoBehaviour:
     maxScale: 1.5
     maximumTrees: 5000
     treeSpacing: 1
-    density: 0.2
+    density: 0.14
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 0.5188679, g: 0.5188679, b: 0.5188679, a: 1}
     lightColor: {r: 1, g: 1, b: 1, a: 1}
-    perlinCutout: 0.46
+    perlinCutout: 0.41
     perlinDist:
       name: Perlin
       perlinXScale: 0.005
@@ -624,7 +624,7 @@ MonoBehaviour:
       heightMultiplier: 1
   - mesh: {fileID: 100000, guid: 21e1dddb280f946a3b1555bb9d691e43, type: 3}
     minHeight: 0.005
-    maxHeight: 0.04
+    maxHeight: 0.13
     minSteepness: 0
     maxSteepness: 25
     minScale: 0.6
@@ -638,8 +638,8 @@ MonoBehaviour:
     perlinCutout: 0.7
     perlinDist:
       name: Perlin
-      perlinXScale: 0.005
-      perlinYScale: 0.005
+      perlinXScale: 0.002
+      perlinYScale: 0.002
       perlinOffsetX: 50
       perlinOffsetY: 50
       perlinOctaves: 4
@@ -651,26 +651,26 @@ MonoBehaviour:
       normalizeSize: 0
       heightMultiplier: 1
   - mesh: {fileID: 100000, guid: c85837c6cd116f201100647a44295342, type: 3}
-    minHeight: 0.05
-    maxHeight: 0.12
+    minHeight: 0.001
+    maxHeight: 0.145
     minSteepness: 0
     maxSteepness: 25
     minScale: 0.95
     maxScale: 1.6
     maximumTrees: 5000
     treeSpacing: 5
-    density: 0.3
+    density: 0.01
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 0.6886792, g: 0.6886792, b: 0.6886792, a: 1}
     lightColor: {r: 1, g: 1, b: 1, a: 1}
-    perlinCutout: 0.4
+    perlinCutout: 0.35
     perlinDist:
       name: Perlin
-      perlinXScale: 0.005
-      perlinYScale: 0.005
+      perlinXScale: 0.006
+      perlinYScale: 0.001
       perlinOffsetX: 506
       perlinOffsetY: 5001
-      perlinOctaves: 4
+      perlinOctaves: 8
       perlinScaleModifier: 1
       perlinPersistance: 0.4
       heightReduction: 0
@@ -710,12 +710,12 @@ MonoBehaviour:
   - prototype: {fileID: 0}
     prototypeTexture: {fileID: 2800000, guid: ba0dbc11bd11158b1100de1b44295342, type: 3}
     minHeight: 0
-    maxHeight: 4
+    maxHeight: 0.2
     minSteepness: 0
     maxSteepness: 90
-    heightScaleRange: {x: 0.8, y: 1.4}
-    widthScaleRange: {x: 0.8, y: 2}
-    density: 0.8
+    heightScaleRange: {x: 1, y: 2.4}
+    widthScaleRange: {x: 1, y: 3}
+    density: 0.9
     feather: 0.008
     color1: {r: 1, g: 1, b: 1, a: 1}
     color2: {r: 0.7372549, g: 0.7302811, b: 0.6753255, a: 1}
@@ -723,11 +723,11 @@ MonoBehaviour:
     perlinCutout: 0.7
     perlinDist:
       name: Perlin
-      perlinXScale: 0.001
-      perlinYScale: 0.001
+      perlinXScale: 0.004
+      perlinYScale: 0.005
       perlinOffsetX: 50
       perlinOffsetY: 50
-      perlinOctaves: 16
+      perlinOctaves: 3
       perlinScaleModifier: 1
       perlinPersistance: 0.4
       heightReduction: 0
@@ -751,11 +751,11 @@ MonoBehaviour:
     perlinCutout: 0.5
     perlinDist:
       name: Perlin
-      perlinXScale: 0.005
-      perlinYScale: 0.005
+      perlinXScale: 0.008
+      perlinYScale: 0.008
       perlinOffsetX: 50
       perlinOffsetY: 50
-      perlinOctaves: 16
+      perlinOctaves: 2
       perlinScaleModifier: 1
       perlinPersistance: 0.4
       heightReduction: 0
