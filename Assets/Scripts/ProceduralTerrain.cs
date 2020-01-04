@@ -54,7 +54,7 @@ public class ProceduralTerrain : MonoBehaviour
         //MidPointDisplacement();
         GenerateVoronoi();
         
-        //GeneratePerlin();
+        GeneratePerlin();
         foreach (ErosionData erodeTarget in erosionList)
         {
             Erode(erodeTarget);
@@ -591,8 +591,8 @@ public class ProceduralTerrain : MonoBehaviour
         Vector3 terrainOriginalSize = terrainData.size;
         terrainData.size = new Vector3(1000, 500, 1000);
         int terrainLayer = LayerMask.GetMask("Terrain");
-        int maximumTrees = 20000;
-        int treeSpacing = 10;
+        int maximumTrees = 900000;
+        int treeSpacing = 1;
         TreePrototype[] newTreePrototypes;
         newTreePrototypes = new TreePrototype[vegetationList.Count];
         int tindex = 0;
@@ -616,6 +616,7 @@ public class ProceduralTerrain : MonoBehaviour
                 {
                     VegetationData currentVeg = vegetationList[tp];
                     if (Random.Range(0.0f, 1f) > currentVeg.density) break;
+                    if (CalculatePerlinNoise(z, x, currentVeg.perlinDist) >= currentVeg.perlinCutout) break;
                     float minHeight = currentVeg.minHeight;
                     float maxHeight = currentVeg.maxHeight;
                     float minSteepness = currentVeg.minSteepness;
