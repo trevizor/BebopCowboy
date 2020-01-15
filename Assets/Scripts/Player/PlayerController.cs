@@ -52,8 +52,15 @@ public class PlayerController : MonoBehaviour
         float tempWalkSpeed = walkSpeed;
         if (Input.GetKey("q"))
             tempWalkSpeed = walkSpeed * 10;
-        if(Input.GetKey("w"))
-            body.velocity = new Vector3 ( camera.transform.forward.x * tempWalkSpeed, body.velocity.y, camera.transform.forward.z * tempWalkSpeed);
+        if (Input.GetKey("w"))
+        {
+            body.velocity = new Vector3(camera.transform.forward.x * tempWalkSpeed, body.velocity.y, camera.transform.forward.z * tempWalkSpeed);
+            body.useGravity = false;
+        } else
+        {
+            body.useGravity = true;
+        }
+            
         if (Input.GetKey("e"))
             body.velocity = new Vector3(body.velocity.x, 20f, body.velocity.z);
         if (Input.GetKey("r"))
