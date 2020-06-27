@@ -51,9 +51,9 @@ public class ProceduralTerrain : MonoBehaviour
             Seed = (int) Random.Range(0f, int.MaxValue);
         Random.InitState(Seed); //init state must come from the level seed
         Camera.main.backgroundColor = Color.white;
-        //MidPointDisplacement();
-        //GenerateVoronoi();
-        //heightMap = GeneratePerlin();
+        MidPointDisplacement();
+        GenerateVoronoi();
+        heightMap = GeneratePerlin();
 
         
         for (int i = 0; i <= 1; i++)
